@@ -1,6 +1,7 @@
 @echo off
 title Vigilante EPP - Apagando...
 chcp 65001 >nul
+cd /d "%~dp0.."
 echo.
 echo  ========================================================
 echo    3/3  VIGILANTE EPP - APAGADO SEGURO

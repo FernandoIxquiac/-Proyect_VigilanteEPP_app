@@ -1,6 +1,8 @@
 @echo off
 title Vigilante EPP - Iniciando...
 chcp 65001 >nul
+cd /d "%~dp0.."
+
 echo.
 echo  ========================================================
 echo    2/3  VIGILANTE EPP - INICIANDO APLICACION
@@ -8,9 +10,8 @@ echo  ========================================================
 echo.
 
 REM --- Verificar que app.py existe ---
-if not exist "..\app.py" (
+if not exist "app.py" (
     echo  [ERROR] No se encontro app.py.
-    echo  Ejecuta este script desde la carpeta scripts\
     echo.
     pause
     exit /b 1
@@ -38,7 +39,6 @@ echo.
 echo  ========================================================
 echo.
 
-cd ..
 streamlit run app.py
 
 pause

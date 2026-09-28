@@ -1,6 +1,8 @@
 @echo off
 title SafeGuard AI - Instalador
 chcp 65001 >nul
+cd /d "%~dp0.."
+
 echo.
 echo  ========================================================
 echo    1/3  VIGILANTE EPP - INSTALACION DE DEPENDENCIAS
@@ -19,9 +21,8 @@ if errorlevel 1 (
 )
 
 REM --- Verificar que requirements.txt existe ---
-if not exist "..\requirements.txt" (
+if not exist "requirements.txt" (
     echo  [ERROR] No se encontro requirements.txt en la raiz del proyecto.
-    echo  Asegurate de ejecutar este script desde la carpeta scripts\
     echo.
     pause
     exit /b 1
@@ -33,7 +34,7 @@ echo  Instalando librerias desde requirements.txt...
 echo  (Esto puede tardar unos minutos la primera vez)
 echo.
 
-pip install -r ..\requirements.txt
+pip install -r requirements.txt
 
 if errorlevel 1 (
     echo.

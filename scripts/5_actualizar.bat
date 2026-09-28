@@ -1,7 +1,7 @@
 @echo off
 title Vigilante EPP - Actualizador
 chcp 65001 >nul
-cd ..
+cd /d "%~dp0.."
 
 echo.
 echo  ================================================================

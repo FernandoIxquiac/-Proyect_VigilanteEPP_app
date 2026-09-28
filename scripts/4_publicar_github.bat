@@ -1,7 +1,6 @@
 @echo off
 title Vigilante EPP - Publicar en GitHub
-chcp 65001 >nul
-cd ..
+cd /d "%~dp0.."
 
 echo.
 echo  ================================================================
@@ -49,18 +48,18 @@ echo  ----------------------------------------------------------------
 set FOUND_RISK=0
 
 REM Verificar que data/ y captures/ esten blindados en .gitignore
-git check-ignore "data\vigilante_epp.db" >nul 2>&1
+git check-ignore "data/vigilante_epp.db" >nul 2>&1
 if errorlevel 1 (
-    echo  [ALERTA CRITICA] data\ no esta protegido en .gitignore - Riesgo de fuga de BD
+    echo  [ALERTA CRITICA] data/ no esta protegido en .gitignore - Riesgo de fuga de BD
     set FOUND_RISK=1
 )
-git check-ignore "captures\evidencia.jpg" >nul 2>&1
+git check-ignore "captures/evidencia.jpg" >nul 2>&1
 if errorlevel 1 (
-    echo  [ALERTA CRITICA] captures\ no esta protegido en .gitignore - Riesgo de fuga de capturas
+    echo  [ALERTA CRITICA] captures/ no esta protegido en .gitignore - Riesgo de fuga de capturas
     set FOUND_RISK=1
 )
 
-REM Verificar que ningún archivo de data/ o captures/ este en el indice de Git (tracked)
+REM Verificar que ningun archivo de data/ o captures/ este en el indice de Git (tracked)
 for /f "tokens=*" %%i in ('git ls-files "data" "captures" 2^>nul') do (
     echo  [ALERTA CRITICA] Archivo sensible rastreado en Git: %%i
     set FOUND_RISK=1
@@ -131,9 +130,7 @@ git commit -m "%commit_msg%"
 
 if errorlevel 1 (
     echo.
-    echo  [AVISO] No habia cambios nuevos para confirmar.
-    pause
-    exit /b 0
+    echo  [INFO] No habia archivos nuevos por confirmar. Continuando con el envio a GitHub...
 )
 
 echo.
