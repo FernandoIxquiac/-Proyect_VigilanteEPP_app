@@ -1,0 +1,33 @@
+# ============================================================
+#  VIGILANTE EPP - .gitignore
+# ============================================================
+
+# --- DATOS SENSIBLES (NUNCA SUBIR) ---
+data/
+captures/
+
+# --- ARCHIVOS TEMPORALES / DUPLICADOS ---
+*.zip
+stitch_safeguard_ai_epp_monitor/
+presupuesto_y_financiacion.txt
+
+# --- PYTHON ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# --- ENTORNOS VIRTUALES ---
+venv/
+env/
+.env
+.venv/
+
+# --- STREAMLIT ---
+.streamlit/secrets.toml
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
