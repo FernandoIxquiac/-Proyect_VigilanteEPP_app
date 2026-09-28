@@ -18,7 +18,8 @@ from .database import (
     create_new_session,
     update_session_counters,
     start_camera_session,
-    end_camera_session
+    end_camera_session,
+    clear_all_data
 )
 from .tracker_manager import WorkerTrackManager
 from .report_generator import compute_audit_kpis, generate_html_report

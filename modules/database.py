@@ -85,7 +85,7 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_events_category ON camera_events(category)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_sessions_status ON camera_sessions(status)")
         
-        # 5. Inicializar primera sesión si la BD está vacía
+        # 5. Inicializar primera sesión limpia si la BD está vacía (sin datos ficticios de demostración)
         cursor.execute("SELECT COUNT(*) FROM camera_sessions")
         sess_count = cursor.fetchone()[0]
         
@@ -93,24 +93,8 @@ def init_db():
             now = datetime.datetime.now()
             cursor.execute("""
                 INSERT INTO camera_sessions (session_name, start_time, status, total_events, infractions_count)
-                VALUES (?, ?, 'active', 7, 3)
-            """, (f"Sesión #1 - Turno Base ({now.strftime('%d/%m/%Y')})", now.strftime("%Y-%m-%d %H:%M:%S")))
-            first_session_id = cursor.lastrowid
-            
-            sample_events = [
-                (first_session_id, (now - datetime.timedelta(hours=4, minutes=15)).strftime("%Y-%m-%d %H:%M:%S"), "Cumplimiento Total (OK)", "Acceso seguro verificado (Casco y Chaleco)", "safe", 2, 97.4, None),
-                (first_session_id, (now - datetime.timedelta(hours=3, minutes=30)).strftime("%Y-%m-%d %H:%M:%S"), "Cumplimiento Total (OK)", "Operario verificado en zona de carga", "safe", 1, 98.1, None),
-                (first_session_id, (now - datetime.timedelta(hours=2, minutes=45)).strftime("%Y-%m-%d %H:%M:%S"), "Sin Chaleco", "Infracción: Ingreso sin chaleco reflectante", "warning", 1, 92.5, None),
-                (first_session_id, (now - datetime.timedelta(hours=1, minutes=50)).strftime("%Y-%m-%d %H:%M:%S"), "Cumplimiento Total (OK)", "Acceso seguro verificado", "safe", 3, 96.0, None),
-                (first_session_id, (now - datetime.timedelta(hours=1, minutes=12)).strftime("%Y-%m-%d %H:%M:%S"), "Sin Casco", "Infracción: Operario sin casco de seguridad", "danger", 1, 95.3, None),
-                (first_session_id, (now - datetime.timedelta(minutes=40)).strftime("%Y-%m-%d %H:%M:%S"), "Cumplimiento Total (OK)", "Inspección periódica en línea", "safe", 1, 98.7, None),
-                (first_session_id, (now - datetime.timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M:%S"), "Sin Casco", "Alerta: Transeúnte en zona de obras sin casco", "danger", 1, 94.0, None),
-            ]
-            
-            cursor.executemany("""
-                INSERT INTO camera_events (session_id, timestamp, category, details, status, personnel_count, confidence, evidence_path)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, sample_events)
+                VALUES (?, ?, 'active', 0, 0)
+            """, (f"Sesión #1 ({now.strftime('%d/%m/%Y %H:%M')})", now.strftime("%Y-%m-%d %H:%M:%S")))
             
         conn.commit()
 
@@ -381,7 +365,7 @@ def get_all_sessions_list() -> list:
     return [dict(r) for r in rows]
 
 def get_hourly_risk_distribution(session_id: int = None) -> pd.DataFrame:
-    """Calcula la distribución horaria de infracciones."""
+    """Calcula la distribución horaria de infracciones reales."""
     with get_connection() as conn:
         cursor = conn.cursor()
         if session_id is not None:
@@ -402,11 +386,31 @@ def get_hourly_risk_distribution(session_id: int = None) -> pd.DataFrame:
             """)
         rows = cursor.fetchall()
 
-    if len(rows) >= 3:
+    if rows:
         data = [{"Turno": r["hora"], "Infracciones": r["count"]} for r in rows]
         return pd.DataFrame(data)
     else:
         return pd.DataFrame({
             "Turno": ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00"],
-            "Infracciones": [2, 5, 3, 2, 6, 1]
+            "Infracciones": [0, 0, 0, 0, 0, 0]
         })
+
+def clear_all_data():
+    """
+    Elimina todos los datos de eventos y sesiones para dejar la base de datos completamente limpia.
+    Crea una sesión inicial limpia con 0 eventos e infracciones.
+    """
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM camera_events")
+        cursor.execute("DELETE FROM camera_sessions")
+        try:
+            cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('camera_events', 'camera_sessions')")
+        except Exception:
+            pass
+        now = datetime.datetime.now()
+        cursor.execute("""
+            INSERT INTO camera_sessions (session_name, start_time, status, total_events, infractions_count)
+            VALUES (?, ?, 'active', 0, 0)
+        """, (f"Sesión #1 ({now.strftime('%d/%m/%Y %H:%M')})", now.strftime("%Y-%m-%d %H:%M:%S")))
+        conn.commit()

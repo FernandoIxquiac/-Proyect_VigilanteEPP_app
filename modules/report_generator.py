@@ -10,8 +10,9 @@ def compute_audit_kpis(detailed_df: pd.DataFrame) -> dict:
             "total_inspections": 0,
             "compliance_pct": 100.0,
             "infractions_count": 0,
-            "risk_verdict": "SIN DATOS SUFICIENTES",
-            "risk_badge": "info",
+            "safe_count": 0,
+            "risk_verdict": "SIN REGISTROS DE AUDITORÍA",
+            "risk_badge": "safe",
             "top_infraction": "Ninguna",
             "top_workers_infractions": []
         }
@@ -119,6 +120,15 @@ def generate_html_report(detailed_df: pd.DataFrame, session_name: str = "Histór
             <td><span class="badge {badge_class}">{badge_text}</span></td>
             <td>{row.get('Certeza_Pct', 0)}%</td>
             <td>{evidence_link}</td>
+        </tr>
+        """
+        
+    if not table_rows.strip():
+        table_rows = """
+        <tr>
+            <td colspan="8" style="text-align:center; padding: 25px; color: #64748b; font-style: italic;">
+                No hay registros de auditoría almacenados en este periodo.
+            </td>
         </tr>
         """
         
