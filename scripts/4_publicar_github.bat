@@ -48,19 +48,23 @@ echo  ----------------------------------------------------------------
 
 set FOUND_RISK=0
 
-REM Verificar archivos sensibles que NO deben subirse
-if exist "data\vigilante_epp.db" (
-    echo  [ALERTA] data\vigilante_epp.db - Base de datos con datos reales
+REM Verificar que data/ y captures/ esten blindados en .gitignore
+git check-ignore "data\vigilante_epp.db" >nul 2>&1
+if errorlevel 1 (
+    echo  [ALERTA CRITICA] data\ no esta protegido en .gitignore - Riesgo de fuga de BD
     set FOUND_RISK=1
 )
-if exist "captures\" (
-    for /f %%f in ('dir /b /a-d "captures\*.jpg" 2^>nul') do (
-        echo  [ALERTA] captures\ - Contiene fotos de operarios identificables
-        set FOUND_RISK=1
-        goto :captures_done
-    )
+git check-ignore "captures\evidencia.jpg" >nul 2>&1
+if errorlevel 1 (
+    echo  [ALERTA CRITICA] captures\ no esta protegido en .gitignore - Riesgo de fuga de capturas
+    set FOUND_RISK=1
 )
-:captures_done
+
+REM Verificar que ningún archivo de data/ o captures/ este en el indice de Git (tracked)
+for /f "tokens=*" %%i in ('git ls-files "data" "captures" 2^>nul') do (
+    echo  [ALERTA CRITICA] Archivo sensible rastreado en Git: %%i
+    set FOUND_RISK=1
+)
 
 REM Verificar que .gitignore existe
 if not exist ".gitignore" (

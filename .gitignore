@@ -2,9 +2,16 @@
 #  VIGILANTE EPP - .gitignore
 # ============================================================
 
-# --- DATOS SENSIBLES (NUNCA SUBIR) ---
+# --- DATOS SENSIBLES Y OPERATIVOS (NUNCA SUBIR) ---
 data/
+data/*
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
 captures/
+captures/*
 
 # --- ARCHIVOS TEMPORALES / DUPLICADOS ---
 *.zip
