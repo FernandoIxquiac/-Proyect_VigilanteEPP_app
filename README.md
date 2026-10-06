@@ -89,6 +89,7 @@
 | Detección IA | Ultralytics YOLOv8 | ≥ 8.1 |
 | Multi-Object Tracking | ByteTrack (integrado en YOLO) | — |
 | Procesamiento de Imagen | OpenCV (`cv2`) | ≥ 4.8 |
+| Visualización Interactiva | Plotly | ≥ 5.0 |
 | Base de Datos | SQLite (normalizada, multi-sesión) | built-in |
 | Análisis de Datos | Pandas | ≥ 2.0 |
 | Computación Numérica | NumPy | ≥ 1.24 |
@@ -101,16 +102,20 @@
 vigilante-epp/
 │
 ├── 📄 README.md                    # Documentación principal del proyecto
+├── 🗺️ PROJECT_MAP.md              # Mapa integral de arquitectura y contexto técnico
 ├── 📄 LICENSE                      # Licencia MIT
-├── 📄 requirements.txt             # Dependencias Python
-├── 📄 .gitignore
+├── 📄 requirements.txt             # Dependencias Python (Streamlit, YOLOv8, Plotly, etc.)
+├── 📄 .gitignore                   # Exclusiones de Git (BD local, capturas, temporales)
+├── 📄 .gitattributes              # Normalización de saltos de línea (CRLF para .bat)
 ├── 🐍 app.py                       # Aplicación principal Streamlit (3 pestañas)
 │
-├── scripts/                        # Herramientas de ejecución (Windows)
-│   ├── 1_instalar.bat              # Instala todas las dependencias automáticamente
-│   ├── 2_iniciar.bat               # Lanza la aplicación en el navegador
-│   ├── 3_apagar.bat                # Cierra el servidor y libera la cámara
-│   └── 4_publicar_github.bat       # Sincroniza cambios con GitHub
+├── scripts/                        # Herramientas de ejecución multiplataforma
+│   ├── 1_instalar.bat              # Instala todas las dependencias automáticamente (Windows)
+│   ├── 1_instalar_linux.sh         # Instalación ligera optimizada PyTorch CPU (Linux)
+│   ├── 2_iniciar.bat               # Lanza la aplicación en el navegador (Windows)
+│   ├── 3_apagar.bat                # Cierra el servidor y libera la cámara (Windows)
+│   ├── 4_publicar_github.bat       # Sincroniza cambios con GitHub con validación de seguridad (Windows)
+│   └── 5_actualizar.bat            # Sincroniza y descarga últimos cambios con Git pull (Windows)
 │
 ├── docs/                           # Documentación técnica y de proyecto
 │   └── proyecto_base.md            # Especificación base y guía de pitch (feria)
@@ -119,20 +124,22 @@ vigilante-epp/
 │   └── logo.jpg                    # Logo del sistema
 │
 ├── models/
-│   └── ppe_model.pt                # Modelo YOLOv8 especializado en EPP (open-source)
+│   └── ppe_model.pt                # Modelo YOLOv8 especializado en EPP (~6.2 MB)
 │
 ├── modules/                        # Arquitectura modular del backend
 │   ├── __init__.py
-│   ├── database.py                 # Esquema SQLite, CRUD, sesiones y consultas
+│   ├── camera.py                   # Captura multihilo desacoplada, buffer O(1) y gestión de hardware
 │   ├── detector.py                 # Inferencia YOLO, tracking y análisis espacial
-│   ├── metrics.py                  # Capa de sesión Streamlit + wrappers de BD
 │   ├── tracker_manager.py          # Anti-duplicación y cooldown por operario (MOT)
-│   ├── report_generator.py         # Generador de informes HTML forenses
-│   └── samples.py                  # Imágenes de demostración sintéticas
+│   ├── database.py                 # Esquema SQLite, CRUD, sesiones y consultas
+│   ├── metrics.py                  # Capa de sesión Streamlit + analítica y ROI
+│   ├── charts.py                   # Gráficos SPC (Shewhart Run Chart) y severidad con Plotly
+│   ├── report_generator.py         # Generador de informes HTML forenses (exportables a PDF)
+│   └── samples.py                  # Generador de escenarios sintéticos de demo
 │
 ├── styles/                         # Componentes visuales y CSS
 │   ├── __init__.py
-│   └── styles.py                   # Temas, cards de estado e incidentes
+│   └── styles.py                   # Temas (Dark/Light Cockpit), header, cards de estado e incidentes
 │
 └── .streamlit/
     └── config.toml                 # Tema visual de Streamlit
@@ -154,12 +161,14 @@ Dentro de la carpeta `scripts/` encontrarás todo lo que necesitas, en orden:
 
 | Script | Acción |
 |---|---|
-| `scripts/1_instalar.bat` | Instala todas las dependencias automáticamente |
+| `scripts/1_instalar.bat` | Instala todas las dependencias automáticamente (Windows) |
+| `scripts/1_instalar_linux.sh` | Instalación ligera con PyTorch CPU optimizado (Linux) |
 | `scripts/2_iniciar.bat` | Lanza la app en el navegador |
 | `scripts/3_apagar.bat` | Cierra el servidor y libera la cámara |
-| `scripts/4_publicar_github.bat` | Sube tus cambios a GitHub |
+| `scripts/4_publicar_github.bat` | Sube tus cambios a GitHub con verificación de seguridad |
+| `scripts/5_actualizar.bat` | Sincroniza y descarga las últimas actualizaciones de GitHub |
 
-> Doble clic sobre cada `.bat` para ejecutarlo — no necesitas saber nada de terminal.
+> Doble clic sobre cada `.bat` para ejecutarlo en Windows (o `bash scripts/1_instalar_linux.sh` en Linux).
 
 ### Opción B — Manual (cualquier sistema operativo)
 
@@ -235,20 +244,26 @@ Entrada de Video
 
 ## 🧩 Módulos del Sistema
 
+### `modules/camera.py`
+Captura de video multihilo desacoplada con backend DirectShow en Windows y buffer O(1). Mantiene el stream vivo en segundo plano de forma independiente a los re-renders de Streamlit.
+
 ### `modules/detector.py`
-Motor principal de visión artificial. Soporta inferencia estándar y tracking persistente (ByteTrack). Incluye análisis espacial para asignar detectiones de EPP a cada persona individualmente.
+Motor principal de visión artificial. Soporta inferencia estándar y tracking persistente (ByteTrack). Incluye análisis espacial para asignar detecciones de EPP a cada persona individualmente.
+
+### `modules/tracker_manager.py`
+Capa de lógica anti-duplicación. Aplica cooldowns individuales por ID de operario (60 s infracciones, 120 s cumplimiento), requiere 2 frames consecutivos para confirmar una alerta y detecta cuándo un operario subsana su infracción.
 
 ### `modules/database.py`
 Esquema relacional SQLite de dos tablas (`camera_sessions` + `camera_events`) con claves foráneas, índices B-Tree y migraciones automáticas seguras. Gestiona múltiples turnos sin borrar historial.
 
-### `modules/tracker_manager.py`
-Capa de lógica anti-duplicación. Aplica cooldowns individuales por ID de operario (45 s infracciones, 120 s cumplimiento), requiere 2 frames consecutivos para confirmar una alerta y detecta cuándo un operario subsana su infracción.
+### `modules/charts.py`
+Gráficos interactivos de Control Estadístico de Procesos (SPC / Shewhart Run Chart) y distribución de severidad cromática con Plotly bajo normativas ISO 45001 / OSHA 1910.
 
 ### `modules/report_generator.py`
 Genera informes HTML auto-contenidos con membrete corporativo, galería de evidencias fotográficas en Base64, tabla forense y casillas de firma — listos para imprimir como PDF.
 
 ### `modules/metrics.py`
-Capa de sesión Streamlit. Conecta el estado de `st.session_state` con la base de datos y expone wrappers limpios para la UI.
+Capa de sesión Streamlit y analítica ejecutiva. Conecta el estado de `st.session_state` con la base de datos, calcula el ROI de multas y expone wrappers limpios para la UI.
 
 ---
 
