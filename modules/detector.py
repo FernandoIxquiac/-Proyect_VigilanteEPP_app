@@ -190,34 +190,34 @@ def analyze_workers_spatial(detections_list, check_helmet=True, check_vest=True)
 
             # Evaluación de Casco
             if not check_helmet:
-                helmet_str = "⚪ No Requerido"
+                helmet_str = "N/R - No Requerido"
                 helmet_ok = True
             elif p_helmets:
                 best = max(p_helmets, key=lambda x: x["confidence"])
-                helmet_str = f"✅ Sí ({best['confidence']}%)"
+                helmet_str = f"SI ({best['confidence']}%)"
                 helmet_ok = True
             elif p_no_helmets:
                 best = max(p_no_helmets, key=lambda x: x["confidence"])
-                helmet_str = f"❌ Sin Casco ({best['confidence']}%)"
+                helmet_str = f"NO - Sin Casco ({best['confidence']}%)"
                 helmet_ok = False
             else:
-                helmet_str = "❌ No Detectado"
+                helmet_str = "NO - No Detectado"
                 helmet_ok = False
 
             # Evaluación de Chaleco
             if not check_vest:
-                vest_str = "⚪ No Requerido"
+                vest_str = "N/R - No Requerido"
                 vest_ok = True
             elif p_vests:
                 best = max(p_vests, key=lambda x: x["confidence"])
-                vest_str = f"✅ Sí ({best['confidence']}%)"
+                vest_str = f"SI ({best['confidence']}%)"
                 vest_ok = True
             elif p_no_vests:
                 best = max(p_no_vests, key=lambda x: x["confidence"])
-                vest_str = f"❌ Sin Chaleco ({best['confidence']}%)"
+                vest_str = f"NO - Sin Chaleco ({best['confidence']}%)"
                 vest_ok = False
             else:
-                vest_str = "❌ No Detectado"
+                vest_str = "NO - No Detectado"
                 vest_ok = False
 
             # Veredicto Integral por Sujeto
@@ -232,25 +232,25 @@ def analyze_workers_spatial(detections_list, check_helmet=True, check_vest=True)
 
             if is_compliant:
                 if check_helmet and check_vest:
-                    veredicto = "🟢 CUMPLE (EPP Completo)"
+                    veredicto = "CUMPLE (EPP Completo)"
                 elif check_helmet:
-                    veredicto = "🟢 CUMPLE (Casco OK)"
+                    veredicto = "CUMPLE (Casco OK)"
                 elif check_vest:
-                    veredicto = "🟢 CUMPLE (Chaleco OK)"
+                    veredicto = "CUMPLE (Chaleco OK)"
                 else:
-                    veredicto = "🟢 ÁREA SIN REQUERIMIENTO"
+                    veredicto = "AREA SIN REQUERIMIENTO"
                 accion = "Pase Aprobado"
                 badge = "safe"
             elif len(infractions) >= 2:
-                veredicto = "🚨 SIN EPP REGLAMENTARIO"
+                veredicto = "INFRACCION: SIN EPP REGLAMENTARIO"
                 accion = "Detener: Exigir Casco y Chaleco"
                 badge = "danger"
             elif "Falta Casco" in infractions:
-                veredicto = "🚨 INFRACCIÓN: FALTA CASCO"
+                veredicto = "INFRACCION: FALTA CASCO"
                 accion = "Detener: Colocar Casco"
                 badge = "danger"
             else:
-                veredicto = "⚠️ INFRACCIÓN: FALTA CHALECO"
+                veredicto = "ADVERTENCIA: FALTA CHALECO"
                 accion = "Detener: Colocar Chaleco"
                 badge = "warning"
 
@@ -275,10 +275,10 @@ def analyze_workers_spatial(detections_list, check_helmet=True, check_vest=True)
             lbl = g["label"]
             conf = g["confidence"]
 
-            h_str = f"✅ Sí ({conf}%)" if lbl == "Hardhat" else (f"❌ Sin Casco ({conf}%)" if lbl == "NO-Hardhat" else "—")
-            v_str = f"✅ Sí ({conf}%)" if lbl == "Safety Vest" else (f"❌ Sin Chaleco ({conf}%)" if lbl == "NO-Safety Vest" else "—")
+            h_str = f"SI ({conf}%)" if lbl == "Hardhat" else (f"NO - Sin Casco ({conf}%)" if lbl == "NO-Hardhat" else "—")
+            v_str = f"SI ({conf}%)" if lbl == "Safety Vest" else (f"NO - Sin Chaleco ({conf}%)" if lbl == "NO-Safety Vest" else "—")
 
-            veredicto = "🚨 INFRACCIÓN" if is_viol else ("🟢 CUMPLE" if is_comp else "ℹ️ OBSERVACIÓN")
+            veredicto = "INFRACCION" if is_viol else ("CUMPLE" if is_comp else "OBSERVACION")
             accion = "Notificar Supervisor" if is_viol else "Pase Aprobado"
             badge = "danger" if is_viol else ("safe" if is_comp else "info")
 
@@ -330,7 +330,7 @@ def evaluate_compliance(detections_list, check_helmet=True, check_vest=True):
             if sin_casco:
                 return {
                     "status": "danger",
-                    "title": "🚨 INFRACCIÓN: FALTA DE CASCO",
+                    "title": "INFRACCION: FALTA DE CASCO",
                     "message": f"{summary['infractions']} de {summary['total']} operarios detectados sin casco obligatorio.",
                     "category": "Sin Casco",
                     "has_violation": True
@@ -338,7 +338,7 @@ def evaluate_compliance(detections_list, check_helmet=True, check_vest=True):
             else:
                 return {
                     "status": "warning",
-                    "title": "⚠️ INFRACCIÓN: FALTA DE CHALECO",
+                    "title": "ADVERTENCIA: FALTA DE CHALECO",
                     "message": f"{summary['infractions']} de {summary['total']} operarios detectados sin chaleco reflectante.",
                     "category": "Sin Chaleco",
                     "has_violation": True
@@ -346,7 +346,7 @@ def evaluate_compliance(detections_list, check_helmet=True, check_vest=True):
         else:
             return {
                 "status": "safe",
-                "title": "CONDICIÓN SEGURA (100% CUMPLIMIENTO)",
+                "title": "CONDICION SEGURA (100% CUMPLIMIENTO)",
                 "message": f"Todos los operarios ({summary['total']}) portan Casco y Chaleco reglamentario.",
                 "category": "Cumplimiento Total (OK)",
                 "has_violation": False
@@ -359,7 +359,7 @@ def evaluate_compliance(detections_list, check_helmet=True, check_vest=True):
     if check_helmet and has_no_helmet:
         return {
             "status": "danger",
-            "title": "🚨 INFRACCIÓN CRÍTICA",
+            "title": "INFRACCION CRITICA",
             "message": "Personal detectado SIN CASCO de seguridad reglamentario.",
             "category": "Sin Casco",
             "has_violation": True
@@ -367,7 +367,7 @@ def evaluate_compliance(detections_list, check_helmet=True, check_vest=True):
     if check_vest and has_no_vest:
         return {
             "status": "warning",
-            "title": "⚠️ INFRACCIÓN DETECTADA",
+            "title": "ADVERTENCIA: INFRACCION DETECTADA",
             "message": "Personal detectado SIN CHALECO reflectante reglamentario.",
             "category": "Sin Chaleco",
             "has_violation": True
@@ -375,8 +375,8 @@ def evaluate_compliance(detections_list, check_helmet=True, check_vest=True):
 
     return {
         "status": "safe",
-        "title": "CONDICIÓN SEGURA",
-        "message": "Supervisión activa: EPP reglamentario verificado.",
+        "title": "CONDICION SEGURA",
+        "message": "Supervision activa: EPP reglamentario verificado.",
         "category": "Cumplimiento Total (OK)",
         "has_violation": False
     }

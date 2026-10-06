@@ -1,6 +1,23 @@
+# =====================================================
+# VIGILANTE EPP — Dependencias de la Aplicacion
+# =====================================================
+# WINDOWS: ejecutar scripts/1_instalar.bat (sin cambios)
+# LINUX:   ejecutar scripts/1_instalar_linux.sh
+#          Esto instala PyTorch CPU (~750 MB) en lugar de
+#          la version CUDA completa (~5-6 GB por defecto)
+# =====================================================
+
 streamlit>=1.30.0
-ultralytics>=8.1.0
+ultralytics>=8.1.0 --no-deps
 opencv-python-headless>=4.8.0
 pillow>=10.0.0
 pandas>=2.0.0
 numpy>=1.24.0
+plotly>=5.0.0
+
+# Dependencias directas de ultralytics (sin torch)
+scipy>=1.10.0
+matplotlib>=3.7.0
+psutil>=5.9.0
+py-cpuinfo>=9.0.0
+lap>=0.4.0

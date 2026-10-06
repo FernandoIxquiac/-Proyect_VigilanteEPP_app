@@ -24,3 +24,4 @@ from .database import (
 from .tracker_manager import WorkerTrackManager
 from .report_generator import compute_audit_kpis, generate_html_report
 from .samples import generate_demo_sample
+from .camera import ThreadedCamera, CameraStreamManager, get_camera_manager
