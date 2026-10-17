@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 680" width="100%" height="100%">
+  <defs>
+    <!-- Gradientes minimalistas para mantener la identidad visual sin texturas complejas -->
+    <linearGradient id="shieldBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F1F5F9" />
+      <stop offset="50%" stop-color="#CBD5E1" />
+      <stop offset="100%" stop-color="#64748B" />
+    </linearGradient>
+
+    <linearGradient id="shieldBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#022C5E" />
+      <stop offset="100%" stop-color="#04152D" />
+    </linearGradient>
+
+    <linearGradient id="cyanGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E4B85" />
+      <stop offset="100%" stop-color="#091E3A" />
+    </linearGradient>
+
+    <!-- Máscara de recorte para las aspas del obturador -->
+    <clipPath id="apertureClip">
+      <circle cx="500" cy="245" r="102" />
+    </clipPath>
+  </defs>
+
+  <!-- ==================== ESCUDO MINIMALISTA ==================== -->
+  <g id="shield">
+    <!-- Borde Exterior Metálico (Facetado) -->
+    <path d="M 500 55 L 675 115 C 675 290 615 395 500 465 C 385 395 325 290 325 115 Z" 
+          fill="url(#shieldBorder)" />
+    
+    <!-- Bisel Interior Sutil para dar el toque geométrico en V -->
+    <path d="M 500 55 L 675 115 C 675 290 615 395 500 465 L 500 434 C 594 374 645 278 645 135 L 500 85 Z" 
+          fill="#94A3B8" opacity="0.35" />
+
+    <!-- Fondo Interior Azul Oscuro -->
+    <path d="M 500 85 L 645 135 C 645 278 594 374 500 434 C 406 374 355 278 355 135 Z" 
+          fill="url(#shieldBg)" />
+  </g>
+
+  <!-- ==================== CIRCUITOS MINIMALISTAS ==================== -->
+  <g id="circuits" stroke="#0EA5E9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.85">
+    <!-- Circuitos Superiores Izquierdos -->
+    <polyline points="366,150 400,150 415,165" />
+    <circle cx="400" cy="150" r="3.5" fill="#38BDF8" />
+    
+    <polyline points="359,175 392,175" />
+    <circle cx="392" cy="175" r="4" fill="#04152D" stroke="#38BDF8" stroke-width="2.5" />
+    
+    <polyline points="363,200 378,200 390,188" />
+    <circle cx="378" cy="200" r="3.5" fill="#38BDF8" />
+
+    <!-- Circuitos Superiores Derechos -->
+    <polyline points="634,150 600,150 585,165" />
+    <circle cx="600" cy="150" r="3.5" fill="#38BDF8" />
+    
+    <polyline points="641,175 608,175" />
+    <circle cx="608" cy="175" r="4" fill="#04152D" stroke="#38BDF8" stroke-width="2.5" />
+    
+    <polyline points="637,200 622,200 610,188" />
+    <circle cx="622" cy="200" r="3.5" fill="#38BDF8" />
+
+    <!-- Circuitos Inferiores -->
+    <line x1="500" y1="363" x2="500" y2="412" />
+    <circle cx="500" cy="412" r="4" fill="#38BDF8" />
+
+    <line x1="484" y1="361" x2="484" y2="394" />
+    <circle cx="484" cy="394" r="3.5" fill="#38BDF8" />
+
+    <line x1="516" y1="361" x2="516" y2="394" />
+    <circle cx="516" cy="394" r="3.5" fill="#38BDF8" />
+
+    <polyline points="440,347 458,382 470,388" />
+    <circle cx="472" cy="389" r="3.5" fill="#04152D" stroke="#38BDF8" stroke-width="2.5" />
+
+    <polyline points="560,347 542,382 530,388" />
+    <circle cx="528" cy="389" r="3.5" fill="#04152D" stroke="#38BDF8" stroke-width="2.5" />
+  </g>
+
+  <!-- ==================== OJO / OBTURADOR CENTRAL ==================== -->
+  <g id="aperture">
+    <!-- Anillo Exterior Azul Claro -->
+    <circle cx="500" cy="245" r="118" fill="none" stroke="url(#cyanGlow)" stroke-width="5" />
+    
+    <!-- Base del Iris -->
+    <circle cx="500" cy="245" r="102" fill="url(#cyanGlow)" />
+    
+    <!-- Anillos de Profundidad Minimalistas -->
+    <circle cx="500" cy="245" r="82" fill="none" stroke="#022C5E" stroke-width="3" opacity="0.25" />
+    <circle cx="500" cy="245" r="65" fill="none" stroke="#E0F2FE" stroke-width="2" opacity="0.4" />
+
+    <!-- Divisiones del Obturador (6 Aspas en Espiral) -->
+    <g clip-path="url(#apertureClip)" fill="none" stroke-linecap="round">
+      <!-- Sombra/Borde de las aspas -->
+      <g stroke="#04152D" stroke-width="16">
+        <path d="M 552 245 A 95 95 0 0 1 460 350" />
+        <path d="M 552 245 A 95 95 0 0 1 460 350" transform="rotate(60 500 245)" />
+        <path d="M 552 245 A 95 95 0 0 1 460 350" transform="rotate(120 500 245)" />
+        <path d="M 552 245 A 95 95 0 0 1 460 350" transform="rotate(180 500 245)" />
+        <path d="M 552 245 A 95 95 0 0 1 460 350" transform="rotate(240 500 245)" />
+        <path d="M 552 245 A 95 95 0 0 1 460 350" transform="rotate(300 500 245)" />
+      </g>
+      <!-- Nervio Metálico del Obturador -->
+      <g stroke="url(#shieldBorder)" stroke-width="8">
+        <path d="M 552 245 A 95 95 0 0 1 460 350" />
+        <path d="M 552 245 A 95 95 0 0 1 460 350" transform="rotate(60 500 245)" />
+        <path d="M 552 245 A 95 95 0 0 1 460 350" transform="rotate(120 500 245)" />
+        <path d="M 552 245 A 95 95 0 0 1 460 350" transform="rotate(180 500 245)" />
+        <path d="M 552 245 A 95 95 0 0 1 460 350" transform="rotate(240 500 245)" />
+        <path d="M 552 245 A 95 95 0 0 1 460 350" transform="rotate(300 500 245)" />
+      </g>
+    </g>
+
+    <!-- Marco Circular Interior del Obturador -->
+    <circle cx="500" cy="245" r="102" fill="none" stroke="url(#shieldBorder)" stroke-width="8" />
+
+    <!-- Anillo Metálico de la Pupila -->
+    <circle cx="500" cy="245" r="54" fill="url(#shieldBorder)" stroke="#04152D" stroke-width="4" />
+    
+    <!-- Pupila Azul Profundo -->
+    <circle cx="500" cy="245" r="36" fill="#031B38" />
+    
+    <!-- Reflejo de Luz (Corte característico en la derecha de la pupila) -->
+    <circle cx="526" cy="236" r="11" fill="url(#shieldBorder)" />
+  </g>
+
+  <!-- ==================== TIPOGRAFÍA VECTORIZADA IDÉNTICA ==================== -->
+  <!-- Cada letra ha sido trazada exactamente con la geometría cuadrada/tecnológica de la imagen -->
+  <g id="exact-typography" fill="url(#textGrad)" fill-rule="evenodd">
+    
+    <!-- V -->
+    <path d="M 140 530 L 156 530 L 175 568 L 194 530 L 210 530 L 182 586 L 168 586 Z" />
+    
+    <!-- I -->
+    <path d="M 220 530 L 235 530 L 235 586 L 220 586 Z" />
+    
+    <!-- G -->
+    <path d="M 248 541 Q 248 530 259 530 L 300 530 L 300 542 L 263 542 L 263 574 L 291 574 L 291 562 L 275 562 L 275 551 L 306 551 L 306 575 Q 306 586 295 586 L 259 586 Q 248 586 248 575 Z" />
+    
+    <!-- I -->
+    <path d="M 318 530 L 333 530 L 333 586 L 318 586 Z" />
+    
+    <!-- L -->
+    <path d="M 346 530 L 361 530 L 361 573 L 396 573 L 396 586 L 346 586 Z" />
+    
+    <!-- A -->
+    <path d="M 426 530 L 444 530 L 472 586 L 456 586 L 450 574 L 420 574 L 414 586 L 398 586 Z M 435 543 L 425 563 L 445 563 Z" />
+    
+    <!-- N -->
+    <path d="M 482 530 L 497 530 L 527 566 L 527 530 L 542 530 L 542 586 L 527 586 L 497 550 L 497 586 L 482 586 Z" />
+    
+    <!-- T -->
+    <path d="M 554 530 L 610 530 L 610 543 L 589.5 543 L 589.5 586 L 574.5 586 L 574.5 543 L 554 543 Z" />
+    
+    <!-- E -->
+    <path d="M 620 530 L 672 530 L 672 542 L 635 542 L 635 552 L 666 552 L 666 564 L 635 564 L 635 574 L 672 574 L 672 586 L 620 586 Z" />
+    
+    <!-- E (EPP) -->
+    <path d="M 706 530 L 758 530 L 758 542 L 721 542 L 721 552 L 752 552 L 752 564 L 721 564 L 721 574 L 758 574 L 758 586 L 706 586 Z" />
+    
+    <!-- P (EPP) -->
+    <path d="M 770 530 L 815 530 Q 826 530 826 541 L 826 555 Q 826 566 815 566 L 785 566 L 785 586 L 770 586 Z M 785 542 L 811 542 L 811 554 L 785 554 Z" />
+    
+    <!-- P (EPP) -->
+    <path d="M 838 530 L 883 530 Q 894 530 894 541 L 894 555 Q 894 566 883 566 L 853 566 L 853 586 L 838 586 Z M 853 542 L 879 542 L 879 554 L 853 554 Z" />
+
+  </g>
+</svg>

@@ -1,21 +1,23 @@
-# 🗺️ PROJECT MAP — Vigilante EPP (SafeGuard AI)
+# PROJECT MAP — Vigilante EPP (SafeGuard AI)
 > **Índice de Contexto Rápido para Agentes y Desarrolladores**  
 > *Consulte este archivo al inicio de una sesión para ubicar arquitectura, módulos y flujos sin re-escanear todo el código.*
 
 ---
 
-## 📌 1. Visión General & Propósito
+## 1. Visión General & Propósito
 **Vigilante EPP** es una aplicación de visión artificial para la supervisión y auditoría en tiempo real del uso de Equipo de Protección Personal (casco, chaleco reflectante) en plantas industriales y obras.
 
 * **Modo de Operación:** 100% Local / Offline.
-* **Interfaz de Usuario:** Dashboard interactivo en Streamlit dividido en 3 pestañas:
-  1. `📹 Vista en Vivo`: Monitoreo en directo por webcam/RTSP con tracking multi-operario (ByteTrack), HUD semafórico y registro automático de infracciones.
-  2. `🖼️ Auditoría de Imágenes`: Auditoría forense de fotografías subidas o sintéticas con comparador visual e informe de cumplimiento.
-  3. `📊 ROI y Métricas`: Panel gerencial con KPIs, gráficos de control estadístico (SPC Shewhart Run Chart), distribución de riesgo, calculadora de ahorro de multas y exportación de informes HTML/PDF.
+* **Interfaz de Usuario:** Dashboard interactivo en Streamlit organizado en 5 secciones mediante menú lateral de navegación y diálogo modal:
+  1. `◈ Demostración`: Sandbox interactivo para probar el modelo en fotografías o escenas sintéticas sin almacenar datos en la base de datos.
+  2. `◉ Análisis en Vivo`: Monitoreo en directo por webcam/RTSP con tracking multi-operario (ByteTrack), HUD semafórico y registro automático de infracciones.
+  3. `▲ Estadísticas`: Panel gerencial con KPIs, gráficos de control estadístico (SPC Shewhart Run Chart), distribución de severidad cromática y calculadora interactiva de ROI.
+  4. `≡ Reportes`: Dictamen pericial automatizado (ISO 45001 / OSHA), bitácora forense de auditoría y exportación oficial en HTML y CSV.
+  5. `⚙ Configuración`: Modal emergente (@st.dialog) para alternar tema visual, ajustar sensibilidad/umbral (%) y activar/desactivar filtros de EPP.
 
 ---
 
-## 🛠️ 2. Stack Tecnológico
+## 2. Stack Tecnológico
 
 | Capa | Tecnologías | Notas |
 |---|---|---|
@@ -30,7 +32,7 @@
 
 ---
 
-## 🏗️ 3. Diagrama de Arquitectura y Flujo de Datos
+## 3. Diagrama de Arquitectura y Flujo de Datos
 
 ```mermaid
 flowchart TD
@@ -80,11 +82,11 @@ flowchart TD
 
 ---
 
-## 📂 4. Directorio y Mapa de Módulos
+## 4. Directorio y Mapa de Módulos
 
 ```
 PROYECTO EPP/
-├── app.py                      # Punto de entrada principal (Streamlit UI, navegación en 3 pestañas y loop de captura)
+├── app.py                      # Punto de entrada principal (Streamlit UI, navegación en sidebar y modal de configuración)
 ├── requirements.txt            # Dependencias del entorno (Streamlit, YOLOv8, OpenCV, Plotly, etc.)
 ├── README.md                   # Documentación general para usuarios y presentación
 ├── PROJECT_MAP.md              # [ESTE ARCHIVO] Mapa de arquitectura e indexación rápida
@@ -96,6 +98,7 @@ PROYECTO EPP/
 ├── assets/
 │   └── logo.jpg                # Logo institucional para reportes y cabecera
 ├── docs/
+│   ├── DESIGN.md               # Especificación completa del sistema de diseño industrial
 │   └── proyecto_base.md        # Especificación técnica base y guía de pitch de feria
 ├── models/
 │   └── ppe_model.pt            # Pesos del modelo YOLOv8 entrenado para EPP (~6.2 MB)
@@ -129,7 +132,7 @@ PROYECTO EPP/
 
 ---
 
-### 🔍 Índice Rápido de Símbolos
+### Índice Rápido de Símbolos
 
 #### [`modules/camera.py`](file:///modules/camera.py) — Captura Multihilo & Hardware de Video
 * `ThreadedCamera`: Hilo demonio de captura en segundo plano con DirectShow en Windows, blindaje contra excepciones C++ en `set()` y tolerancia a caídas transitorias de fotogramas.
@@ -188,7 +191,7 @@ PROYECTO EPP/
 
 ---
 
-## 💾 5. Esquema de Datos (`vigilante_epp.db`)
+## 5. Esquema de Datos (`vigilante_epp.db`)
 
 ### Tabla Maestra: `camera_sessions`
 | Columna | Tipo | Descripción |
@@ -207,7 +210,7 @@ PROYECTO EPP/
 |---|---|---|
 | `id` | INTEGER (PK AUTOINCREMENT) | Identificador único del evento |
 | `session_id` | INTEGER (FK) | Referencia a `camera_sessions(id)` con ON DELETE CASCADE |
-| `worker_id` | TEXT DEFAULT 'N/A' | ID persistente del trabajador (ByteTrack, ej. `#Operario-01`) |
+| `worker_id` | TEXT DEFAULT 'N/A' | ID persistente del trabajador (ByteTrack, ej. '#Operario-01') |
 | `timestamp` | DATETIME NOT NULL | Fecha y hora exacta del suceso |
 | `category` | TEXT NOT NULL | Clasificación (`'Cumplimiento Total (OK)'`, `'Sin Casco'`, `'Sin Chaleco'`, etc.) |
 | `details` | TEXT | Descripción pericial detallada |
@@ -225,7 +228,7 @@ PROYECTO EPP/
 
 ---
 
-## 🚀 6. Checklist de Publicación en GitHub
+## 6. Checklist de Publicación en GitHub
 
 Antes de ejecutar `scripts/4_publicar_github.bat`, verificar:
 1. **Archivos Sensibles Ignorados:** Verificar que `data/` (`*.db`) y `captures/` (`*.jpg`) no estén en el staged de Git (`git status`).
@@ -235,6 +238,6 @@ Antes de ejecutar `scripts/4_publicar_github.bat`, verificar:
 
 ---
 
-## 💡 Instrucción para el Asistente de IA (Cómo usar este mapa)
+## 7. Instrucciones para Asistentes y Desarrolladores
 1. **No re-escanear todo el proyecto:** Para responder dudas sobre flujos de datos o ubicar lógica, use las rutas y funciones listadas en este mapa.
 2. **Consultar archivos específicos:** Abra únicamente el archivo en `modules/` relacionado con el cambio solicitado (ej: para alertas o cooldowns `tracker_manager.py`, para base de datos `database.py`, para visualizaciones `charts.py`).

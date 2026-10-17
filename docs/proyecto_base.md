@@ -1,4 +1,4 @@
-# 🛡️ SafeGuard AI: Detector de EPP en Tiempo Real
+# SafeGuard AI: Detector de EPP en Tiempo Real
 > **Documento Base del Proyecto - Edición Feria de Emprendimiento**
 
 ---
@@ -25,62 +25,80 @@ Para garantizar que el demo funcione sin fallos, sin requerir servidores externo
 
 ---
 
-## 3. Estructura de la Aplicación Web (3 Pestañas Esenciales)
+## 3. Estructura de la Aplicación Web (5 Secciones con Sidebar)
 
-La interfaz se divide en 3 vistas clave enfocadas en captar la atención del público y del jurado:
+La interfaz se organiza en un menú lateral de navegación sobrio y moderno con acceso rápido a las secciones clave:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        🛡️ SafeGuard AI - Dashboard                      │
-├────────────────────────────────────────────────────────────────────────┤
-│  [ Pestaña 1: Monitoreo en Vivo ] [ Pestaña 2: Análisis ] [ Pestaña 3: Métricas & ROI ] │
-└────────────────────────────────────────────────────────────────────────┘
+│                        SafeGuard AI - Dashboard                        │
+├───────────────────┬────────────────────────────────────────────────────┤
+│  Navegación       │  Vista Principal Activa                            │
+│  ──────────       │  ──────────────────────                            │
+│  ◈ Demostración   │  Sandbox: prueba sin almacenar en BD               │
+│  ◉ Análisis Vivo  │  Webcam/RTSP en vivo + Tracking MOT + Semáforo HUD │
+│  ▲ Estadísticas   │  Control Estadístico SPC + KPIs + Calculadora ROI  │
+│  ≡ Reportes       │  Bitácora pericial (ISO/OSHA) + HTML/CSV           │
+│  ──────────────── │                                                    │
+│  ⚙ Configuración  │  Modal (@st.dialog): Sensibilidad, Tema y Filtros  │
+└───────────────────┴────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 🔹 Pestaña 1: Monitoreo en Vivo (Live Webcam)
-* **Objetivo:** Demostración en vivo en el stand de la feria.
+### Sección 1: Demostración (Sandbox de Pruebas)
+* **Objetivo:** Demostración interactiva inmediata sin alterar la base de datos operativa.
 * **Elementos Esenciales:**
-  1. **Interruptor de Cámara:** Iniciar / Detener transmisión de la webcam.
-  2. **Checklist de EPP Activo:** Filtros de seguridad a auditar (`[x] Casco de Seguridad`, `[x] Chaleco Reflectante`, `[x] Gafas`).
-  3. **Visor de Video en Tiempo Real:** 
-     * Recuadro 🟢 **Verde** cuando se detecta el EPP reglamentario.
-     * Recuadro 🔴 **Rojo** cuando se detecta la persona sin el equipo requerido.
-  4. **Semáforo de Estado en Vivo:** Alerta visual destacada en pantalla: `ESTADO: SEGURO (100% EPP)` o `ALERTA: INFRACCIÓN DETECTADA`.
+  1. **Banner Informativo:** Indicador visual de modo demostración activo (sin persistencia).
+  2. **Selector de Escenas Sintéticas:** Casos simulados de prueba (`Obrero con EPP Completo`, `Infracción Falta de Casco`).
+  3. **Carga Manual:** Subida de fotografías locales (`.jpg`, `.png`).
+  4. **Comparador Visual Lado a Lado:** Imagen original vs. Análisis con detección YOLOv8.
+  5. **Desglose de Hallazgos por Trabajador:** Tabla con verificación individual de casco, chaleco y veredicto.
 
 ---
 
-### 🔹 Pestaña 2: Inspección de Archivos (Fotos y Videos)
-* **Objetivo:** Mostrar cómo funcionaría el sistema en fotos o grabaciones de obras industriales reales.
+### Sección 2: Análisis en Vivo (Monitoreo en Tiempo Real)
+* **Objetivo:** Monitoreo activo continuo por webcam o flujo IP con registro automático de auditorías.
 * **Elementos Esenciales:**
-  1. **Selector de Imágenes de Muestra:** Botones rápidos (`Ejemplo 1: Obrero con EPP completo`, `Ejemplo 2: Obrero sin Casco`) para demostraciones rápidas en 1 clic.
-  2. **Carga Manual:** Opción para subir imágenes (`.jpg`, `.png`) desde la computadora.
-  3. **Visualización Lado a Lado:** Imagen original vs. Imagen analizada con cajas de detección y etiquetas de confianza (%).
-  4. **Resumen de Hallazgos:** Tabla con el listado de personas y elementos encontrados.
+  1. **Selectores de Dispositivo y Modo:** Compatibilidad con webcam integrada, externa USB, flujo RTSP y modo Snapshot.
+  2. **Transmisión Fluida Desacoplada:** Captura multihilo en segundo plano que previene interrupciones de hardware.
+  3. **Tracking Multi-Operario (ByteTrack):** Persistencia de IDs entre cuadros y prevención de registros duplicados.
+  4. **Semáforo HUD y Feed de Últimas Auditorías:** Estado normativo (`SEGURO`, `ADVERTENCIA`, `CRÍTICO`) y tarjetas en vivo.
 
 ---
 
-### 🔹 Pestaña 3: Métricas de Seguridad & Calculadora de ROI (Pitch Empresarial)
-* **Objetivo:** Demostrar a los evaluadores que no es solo un detector, sino una solución rentable para empresas.
+### Sección 3: Estadísticas (Control de Procesos & ROI)
+* **Objetivo:** Análisis estadístico para toma de decisiones gerenciales y pitch financiero de rentabilidad.
 * **Elementos Esenciales:**
-  1. **KPI Cards:**
-     * `% Cumplimiento de Normativa EPP`
-     * `Infracciones Prevenidas`
-     * `Tasa de Reducción de Riesgo`
-  2. **Gráfico Estadístico:** Distribución de faltas más comunes (ej. Falta de Casco vs. Falta de Chaleco).
-  3. **Calculadora Interactiva de Ahorro:**
-     * Control deslizable para ingresar número de trabajadores de la empresa.
-     * Cálculo automático de ahorro anual estimado en multas laborales y reducción de costos de seguro.
+  1. **Filtro por Sesión / Turno:** Análisis de sesiones individuales o consolidado histórico global.
+  2. **KPIs Ejecutivos:** Total de auditorías, tasa de cumplimiento, infracciones y ROI estimado.
+  3. **Gráficos SPC y Severidad:** Control Estadístico de Procesos (Shewhart Run Chart) y distribución de riesgo.
+  4. **Calculadora Interactiva de ROI:** Deslizadores de trabajadores y multas promedio con proyección de ahorro anual.
+
+---
+
+### Sección 4: Reportes (Auditoría Forense y Exportación)
+* **Objetivo:** Cumplimiento normativo legal (ISO 45001 / OSHA 1910) y peritaje exportable.
+* **Elementos Esenciales:**
+  1. **Diagnóstico Pericial Automatizado:** Tarjeta de apego normativo e infracción predominante.
+  2. **Filtros por Riesgo y Operario:** Filtrado específico de eventos críticos y trazabilidad por trabajador.
+  3. **Galería de Evidencias Fotográficas:** Muestra visual de capturas asociadas a infracciones detectadas.
+  4. **Exportación Oficial:** Generación y descarga de informes formales en HTML (listos para PDF con Ctrl+P) y bitácora en CSV.
+
+---
+
+### Modal de Configuración (@st.dialog)
+* **Objetivo:** Panel de control centralizado accesible desde el sidebar sin recargar la navegación.
+* **Elementos Esenciales:** Conmutador de Tema Oscuro/Claro, filtros de EPP (Casco, Chaleco), umbral de sensibilidad (%) y gestión de turno activo.
 
 ---
 
 ## 4. Guía del Pitch para la Feria (2 Minutos)
 
 1. **Problema (30 seg):** Explicar el impacto de los accidentes por falta de EPP y la limitación de la supervisión humana tradicional.
-2. **Demo en Vivo (45 seg):** Activar la cámara en vivo en la Pestaña 1, mostrar la detección instantánea al ponerse/quitarse el EPP.
-3. **Casos Reales y Escalabilidad (20 seg):** Pasar a la Pestaña 2 y mostrar el análisis sobre fotos de plantas industriales.
-4. **Propuesta Económica (25 seg):** Cerrar en la Pestaña 3 con la calculadora de ahorro y el modelo de software integrable con cámaras CCTV ya instaladas.
+2. **Demo en Vivo (45 seg):** Activar la cámara en la sección **◉ Análisis en Vivo**, mostrar la detección instantánea al ponerse/quitarse el EPP.
+3. **Casos y Trazabilidad (20 seg):** Mostrar **◈ Demostración** con fotos reales y la bitácora pericial en **≡ Reportes**.
+4. **Propuesta Económica (25 seg):** Cerrar en **▲ Estadísticas** con la calculadora de ROI y el modelo integrable con CCTV.
 
 ---
 
@@ -90,8 +108,7 @@ La interfaz se divide en 3 vistas clave enfocadas en captar la atención del pú
    ```bash
    pip install -r requirements.txt
    ```
-2. **Iniciar la aplicación:**
+2. **Ejecutar la aplicación:**
    ```bash
    streamlit run app.py
    ```
-3. Se abrirá automáticamente en tu navegador web en `http://localhost:8501`.

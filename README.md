@@ -1,11 +1,11 @@
-# 🛡️ Vigilante EPP — SafeGuard AI
+# Vigilante EPP — SafeGuard AI
 
 <div align="center">
 
 **Sistema Inteligente de Detección de Equipos de Protección Personal en Tiempo Real**
 
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776ab?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.30%2B-ff4b4b?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.50%2B-ff4b4b?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-00C4CC?style=for-the-badge&logo=yolo&logoColor=white)](https://ultralytics.com)
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.8%2B-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)](https://opencv.org/)
 [![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
@@ -17,23 +17,23 @@
 
 ---
 
-## 📋 Tabla de Contenidos
+## Tabla de Contenidos
 
-- [¿Qué es Vigilante EPP?](#-qué-es-vigilante-epp)
-- [Demostración](#-demostración)
-- [Características Principales](#-características-principales)
-- [Stack Tecnológico](#-stack-tecnológico)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Instalación y Ejecución](#-instalación-y-ejecución)
-- [Cómo Funciona](#-cómo-funciona)
-- [Módulos del Sistema](#-módulos-del-sistema)
-- [Impacto y ROI](#-impacto-y-roi)
-- [Contribuir](#-contribuir)
-- [Licencia](#-licencia)
+- [¿Qué es Vigilante EPP?](#que-es-vigilante-epp)
+- [Demostración](#demostración)
+- [Características Principales](#características-principales)
+- [Stack Tecnológico](#stack-tecnológico)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Instalación y Ejecución](#instalación-y-ejecución)
+- [Cómo Funciona](#cómo-funciona)
+- [Módulos del Sistema](#módulos-del-sistema)
+- [Impacto y ROI](#impacto-y-roi)
+- [Contribuir](#contribuir)
+- [Licencia](#licencia)
 
 ---
 
-## 🔍 ¿Qué es Vigilante EPP?
+## <a name="que-es-vigilante-epp"></a>¿Qué es Vigilante EPP?
 
 **Vigilante EPP** es una plataforma de visión por computadora que analiza transmisiones de video en tiempo real para detectar automáticamente la **presencia o ausencia de Equipos de Protección Personal (EPP)** — casco de seguridad y chaleco reflectante — en entornos industriales.
 
@@ -43,49 +43,54 @@
 
 ---
 
-## 🎬 Demostración
+## Demostración
 
-| Pestaña | Descripción |
+| Sección | Descripción |
 |---|---|
-| **📹 Live View** | Monitoreo en vivo con webcam o flujo RTSP/IP. Detección frame a frame con tracking persistente (ByteTrack MOT). |
-| **🖼️ Audit** | Análisis forense de fotografías de planta. Comparador visual lado a lado original vs. IA. |
-| **📊 ROI & Métricas** | Panel gerencial con KPIs, gráficos de tendencia, calculadora interactiva de ahorro y exportación de informes HTML/CSV. |
+| **◈ Demostración** | Modo Sandbox interactivo para probar el modelo en fotos subidas o escenarios sintéticos sin almacenar datos en la BD. |
+| **◉ Análisis en Vivo** | Monitoreo en directo por webcam o flujo RTSP/IP. Detección continua con tracking persistente (ByteTrack MOT) y semáforo HUD. |
+| **▲ Estadísticas** | Control Estadístico de Procesos (SPC Shewhart Run Chart), distribución de severidad cromática y calculadora interactiva de ROI. |
+| **≡ Reportes** | Dictamen pericial automatizado (ISO 45001 / OSHA), bitácora forense de auditoría y exportación de informes HTML/CSV. |
+| **⚙ Configuración** | Modal emergente (@st.dialog) para alternar tema (Oscuro/Claro), ajustar umbrales de sensibilidad y filtros de EPP. |
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                 🛡️ VIGILANTE EPP 4.0 — Dashboard                │
-├──────────────────┬──────────────────────┬───────────────────────┤
-│  📹 Live View    │  🖼️ Audit            │  📊 ROI & Métricas    │
-│                  │                      │                       │
-│  [CAM] ──► IA   │  [FOTO] ──► Análisis │  KPIs · Gráficos      │
-│  Semáforo HUD    │  Tabla de desglose   │  ROI Calculator       │
-│  Tracker MOT     │  por trabajador      │  Exportar HTML/CSV    │
-└──────────────────┴──────────────────────┴───────────────────────┘
+│                 VIGILANTE EPP 4.0 — Dashboard                   │
+├───────────────────┬─────────────────────────────────────────────┤
+│  Navegación       │  Vista Activa                               │
+│  ──────────       │  ────────────                               │
+│  ◈ Demostración   │  [MODO SELECCIONADO]                        │
+│  ◉ Análisis Vivo  │  Telemetría · Detección YOLOv8              │
+│  ▲ Estadísticas   │  Control SPC · Gráficos · Calculadora ROI   │
+│  ≡ Reportes       │  Bitácora Forense · Informes HTML / CSV     │
+│  ──────────────── │                                             │
+│  ⚙ Configuración  │  Modal: Tema, Sensibilidad, Filtros EPP     │
+└───────────────────┴─────────────────────────────────────────────┘
 ```
 
 ---
 
-## ✨ Características Principales
+## Características Principales
 
-- **🎯 Detección en Tiempo Real** — YOLOv8 corriendo directamente en CPU/GPU local, sin depender de APIs externas.
-- **👤 Multi-Object Tracking (MOT)** — ByteTrack asigna IDs persistentes a cada operario entre frames para evitar registros duplicados.
-- **🧠 Análisis Espacial por Trabajador** — El sistema agrupa detecciones de EPP por persona usando solapamiento geométrico, evaluando casco y chaleco de forma individual por operario.
-- **🚦 Semáforo de Estado Inteligente** — Estado visual inmediato: `SEGURO (verde)` / `ADVERTENCIA (naranja)` / `INFRACCIÓN CRÍTICA (rojo)`.
-- **📸 Evidencia Fotográfica Automática** — Captura y guarda automáticamente JPGs de cada infracción detectada para trazabilidad legal.
-- **🗄️ Base de Datos Normalizada** — SQLite con esquema relacional (sesiones + eventos), índices B-Tree y soporte para múltiples turnos históricos.
-- **📑 Informes Forenses HTML** — Reportes auto-contenidos listos para guardar como PDF (ISO 45001 / OSHA 1910).
-- **💰 Calculadora de ROI** — Estimación interactiva de ahorro anual en multas y pólizas de seguro.
-- **🌓 Modo Oscuro / Claro** — Interfaz adaptable con tema profesional.
-- **📴 100% Offline** — Funciona sin conexión a internet una vez instalado.
+- **Detección en Tiempo Real** — YOLOv8 corriendo directamente en CPU/GPU local, sin depender de APIs externas.
+- **Multi-Object Tracking (MOT)** — ByteTrack asigna IDs persistentes a cada operario entre frames para evitar registros duplicados.
+- **Análisis Espacial por Trabajador** — El sistema agrupa detecciones de EPP por persona usando solapamiento geométrico, evaluando casco y chaleco de forma individual por operario.
+- **Semáforo de Estado Inteligente** — Estado visual inmediato: `SEGURO (verde)` / `ADVERTENCIA (naranja)` / `INFRACCIÓN CRÍTICA (rojo)`.
+- **Evidencia Fotográfica Automática** — Captura y guarda automáticamente JPGs de cada infracción detectada para trazabilidad legal.
+- **Base de Datos Normalizada** — SQLite con esquema relacional (sesiones + eventos), índices B-Tree y soporte para múltiples turnos históricos.
+- **Informes Forenses HTML** — Reportes auto-contenidos listos para guardar como PDF (ISO 45001 / OSHA 1910).
+- **Calculadora de ROI** — Estimación interactiva de ahorro anual en multas y pólizas de seguro.
+- **Modo Oscuro / Claro** — Interfaz adaptable con tema profesional.
+- **100% Offline** — Funciona sin conexión a internet una vez instalado.
 
 ---
 
-## 🧱 Stack Tecnológico
+## Stack Tecnológico
 
 | Componente | Tecnología | Versión |
 |---|---|---|
 | Lenguaje | Python | 3.9+ |
-| Frontend / Web App | Streamlit | ≥ 1.30 |
+| Frontend / Web App | Streamlit | ≥ 1.50 |
 | Detección IA | Ultralytics YOLOv8 | ≥ 8.1 |
 | Multi-Object Tracking | ByteTrack (integrado en YOLO) | — |
 | Procesamiento de Imagen | OpenCV (`cv2`) | ≥ 4.8 |
@@ -93,21 +98,22 @@
 | Base de Datos | SQLite (normalizada, multi-sesión) | built-in |
 | Análisis de Datos | Pandas | ≥ 2.0 |
 | Computación Numérica | NumPy | ≥ 1.24 |
+| **Estilos** | CSS personalizado (`styles/styles.py`) | Tema Dark/Light con variables CSS semánticas, tipografía JetBrains Mono para telemetría, logo SVG vectorial en sidebar y header |
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 vigilante-epp/
 │
-├── 📄 README.md                    # Documentación principal del proyecto
-├── 🗺️ PROJECT_MAP.md              # Mapa integral de arquitectura y contexto técnico
-├── 📄 LICENSE                      # Licencia MIT
-├── 📄 requirements.txt             # Dependencias Python (Streamlit, YOLOv8, Plotly, etc.)
-├── 📄 .gitignore                   # Exclusiones de Git (BD local, capturas, temporales)
-├── 📄 .gitattributes              # Normalización de saltos de línea (CRLF para .bat)
-├── 🐍 app.py                       # Aplicación principal Streamlit (3 pestañas)
+├── README.md                       # Documentación principal del proyecto
+├── PROJECT_MAP.md                  # Mapa integral de arquitectura y contexto técnico
+├── LICENSE                         # Licencia MIT
+├── requirements.txt                # Dependencias Python (Streamlit, YOLOv8, Plotly, etc.)
+├── .gitignore                      # Exclusiones de Git (BD local, capturas, temporales)
+├── .gitattributes                  # Normalización de saltos de línea (CRLF para .bat)
+├── app.py                          # Aplicación principal Streamlit (navegación en sidebar y modal de configuración)
 │
 ├── scripts/                        # Herramientas de ejecución multiplataforma
 │   ├── 1_instalar.bat              # Instala todas las dependencias automáticamente (Windows)
@@ -118,6 +124,7 @@ vigilante-epp/
 │   └── 5_actualizar.bat            # Sincroniza y descarga últimos cambios con Git pull (Windows)
 │
 ├── docs/                           # Documentación técnica y de proyecto
+│   ├── DESIGN.md                   # Sistema de diseño sobrio industrial
 │   └── proyecto_base.md            # Especificación base y guía de pitch (feria)
 │
 ├── assets/
@@ -149,7 +156,7 @@ vigilante-epp/
 
 ---
 
-## ⚡ Instalación y Ejecución
+## Instalación y Ejecución
 
 ### Prerequisitos
 - Python 3.9 o superior
@@ -203,7 +210,7 @@ La aplicación abrirá automáticamente en tu navegador en **`http://localhost:8
 
 ---
 
-## ⚙️ Cómo Funciona
+## Cómo Funciona
 
 ```
 Entrada de Video
@@ -211,7 +218,7 @@ Entrada de Video
         │
         ▼
 ┌──────────────────┐
-│  YOLOv8 + BYTE  │  ← Detección de objetos + IDs persistentes por persona
+│  YOLOv8 + BYTE   │  ← Detección de objetos + IDs persistentes por persona
 │  TRACK (MOT)     │
 └────────┬─────────┘
          │ detections_list[]
@@ -242,7 +249,7 @@ Entrada de Video
 
 ---
 
-## 🧩 Módulos del Sistema
+## Módulos del Sistema
 
 ### `modules/camera.py`
 Captura de video multihilo desacoplada con backend DirectShow en Windows y buffer O(1). Mantiene el stream vivo en segundo plano de forma independiente a los re-renders de Streamlit.
@@ -267,21 +274,21 @@ Capa de sesión Streamlit y analítica ejecutiva. Conecta el estado de `st.sessi
 
 ---
 
-## 💰 Impacto y ROI
+## Impacto y ROI
 
 | Indicador | Valor Proyectado |
 |---|---|
 | Reducción de infracciones de EPP | **~85%** |
 | Infracciones prevenidas / 100 trabajadores / año | **~30** |
-| Ahorro estimado en multas y pólizas (100 trabajadores) | **~\$75,000 USD/año** |
+| Ahorro estimado en multas y pólizas (100 trabajadores) | **~$75,000 USD/año** |
 | Tiempo de respuesta ante infracción | **< 2 segundos** |
 | Disponibilidad del sistema | **24/7 sin fatiga** |
 
-> Calcula el ahorro específico para tu empresa en la pestaña **📊 ROI & Métricas** de la aplicación.
+> Calcula el ahorro específico para tu empresa en la sección **▲ Estadísticas** de la aplicación.
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [x] Detección en tiempo real (YOLOv8)
 - [x] Multi-Object Tracking (ByteTrack)
@@ -296,7 +303,7 @@ Capa de sesión Streamlit y analítica ejecutiva. Conecta el estado de `st.sessi
 
 ---
 
-## 🤝 Contribuir
+## Contribuir
 
 Las contribuciones son bienvenidas. Para contribuir:
 
@@ -308,7 +315,7 @@ Las contribuciones son bienvenidas. Para contribuir:
 
 ---
 
-## 📄 Licencia
+## Licencia
 
 Este proyecto está bajo la Licencia **MIT**. Consulta el archivo [LICENSE](LICENSE) para más detalles.
 
@@ -316,7 +323,7 @@ Este proyecto está bajo la Licencia **MIT**. Consulta el archivo [LICENSE](LICE
 
 <div align="center">
 
-Desarrollado con ❤️ para la **Feria de Proyectos de Emprendimiento 2026**
+Desarrollado para la **Feria de Proyectos de Emprendimiento 2026**
 
 *Prevención Proactiva de Accidentes Laborales · Inteligencia Artificial Aplicada a la Seguridad Industrial*
 

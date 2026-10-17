@@ -95,7 +95,7 @@ def generate_html_report(detailed_df: pd.DataFrame, session_name: str = "Histór
         evidence_link = "—"
         ev_path = row.get("Ruta_Evidencia")
         if ev_path and os.path.exists(ev_path):
-            evidence_link = "📸 Evidencia Adjunta"
+            evidence_link = "Evidencia Adjunta"
             if embedded_photos < 6:
                 b64_img = image_to_base64(ev_path)
                 if b64_img:
@@ -375,7 +375,7 @@ def generate_html_report(detailed_df: pd.DataFrame, session_name: str = "Histór
 <div class="report-sheet">
     <div class="report-header">
         <div class="header-title">
-            <h1>🛡️ VIGILANTE EPP 4.0</h1>
+            <h1>VIGILANTE EPP 4.0</h1>
             <p>Informe Técnico de Auditoría Forense y Prevención de Riesgos Laborales</p>
             <p style="font-size:0.75rem; color:#94a3b8;">Cumplimiento Normativo ISO 45001 / OSHA 1910 • Visión Artificial</p>
         </div>
