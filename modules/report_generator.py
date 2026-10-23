@@ -66,10 +66,11 @@ def image_to_base64(image_path: str) -> str:
     except Exception:
         return None
 
-def generate_html_report(detailed_df: pd.DataFrame, session_name: str = "Histórico Global", auditor_name: str = "Supervisor de Seguridad y Salud en el Trabajo") -> str:
+def generate_html_report(detailed_df: pd.DataFrame, session_name: str = "Histórico Global", auditor_name: str = "Supervisor de Seguridad y Salud en el Trabajo", is_preliminary: bool = False) -> str:
     """
     Genera un informe oficial de auditoría en formato HTML corporativo auto-contenido.
     Listo para guardar como PDF (Ctrl+P) con membrete, métricas, evidencias y casillas de firma.
+    Soporta la leyenda pericial de 'DICTAMEN PRELIMINAR - EN OPERACIÓN CONTINUA' para turnos activos.
     """
     kpis = compute_audit_kpis(detailed_df)
     now = datetime.datetime.now()
@@ -140,6 +141,21 @@ def generate_html_report(detailed_df: pd.DataFrame, session_name: str = "Histór
         reincidence_html = f"<ul>{items}</ul>"
     else:
         reincidence_html = "<p style='color:#10b981; font-weight:600;'>No se detectaron reincidencias en el periodo auditado.</p>"
+
+    preliminary_banner = ""
+    status_label = "Concluido / Cerrado"
+    if is_preliminary:
+        status_label = "En Curso (Preliminar)"
+        preliminary_banner = """
+    <div style="background-color: #fef3c7; border: 2px dashed #d97706; padding: 12px 18px; border-radius: 8px; margin-bottom: 22px; text-align: center;">
+        <div style="color: #b45309; font-size: 0.92rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">
+            DICTAMEN PRELIMINAR - EN OPERACIÓN CONTINUA
+        </div>
+        <p style="color: #92400e; font-size: 0.80rem; margin-top: 4px;">
+            Este documento representa un corte pericial intermedio en tiempo real mientras el turno de trabajo y la supervisión por visión artificial permanecen activos. No constituye el cierre formal definitivo de turno.
+        </p>
+    </div>
+    """
 
     html = f"""<!DOCTYPE html>
 <html lang="es">
@@ -383,9 +399,12 @@ def generate_html_report(detailed_df: pd.DataFrame, session_name: str = "Histór
             <div><strong>Código:</strong> {report_code}</div>
             <div><strong>Fecha de Emisión:</strong> {now.strftime('%d/%m/%Y %H:%M')}</div>
             <div><strong>Ámbito Auditado:</strong> {session_name}</div>
+            <div><strong>Estado del Turno:</strong> {status_label}</div>
             <div><strong>Sistema Auditor:</strong> SafeGuard AI v4.0</div>
         </div>
     </div>
+    
+    {preliminary_banner}
     
     <div class="verdict-banner">
         <h3>DIAGNÓSTICO PERICIAL: {kpis['risk_verdict']}</h3>

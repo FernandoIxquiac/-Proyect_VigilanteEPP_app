@@ -45,13 +45,16 @@
 
 ## Demostración
 
-| Sección | Descripción |
-|---|---|
-| **◈ Demostración** | Modo Sandbox interactivo para probar el modelo en fotos subidas o escenarios sintéticos sin almacenar datos en la BD. |
-| **◉ Análisis en Vivo** | Monitoreo en directo por webcam o flujo RTSP/IP. Detección continua con tracking persistente (ByteTrack MOT) y semáforo HUD. |
-| **▲ Estadísticas** | Control Estadístico de Procesos (SPC Shewhart Run Chart), distribución de severidad cromática y calculadora interactiva de ROI. |
-| **≡ Reportes** | Dictamen pericial automatizado (ISO 45001 / OSHA), bitácora forense de auditoría y exportación de informes HTML/CSV. |
-| **⚙ Configuración** | Modal emergente (@st.dialog) para alternar tema (Oscuro/Claro), ajustar umbrales de sensibilidad y filtros de EPP. |
+| Sección / Componente | Icono Vectorial | Descripción |
+|---|:---:|---|
+| **Demostración** | `device-desktop.svg` | Prueba imágenes y escenas sintéticas, o abre una ventana local con video y marcas de detección. El video no crea auditorías ni guarda datos. |
+| **Análisis en Vivo** | `video.svg` | Monitoreo por webcam o flujo RTSP/IP en una ventana local de escritorio. El navegador muestra controles, estado y métricas, sin transmitir el video. |
+| **Estadísticas** | `chart-bar.svg` | Control Estadístico de Procesos (SPC Shewhart Run Chart), distribución de severidad cromática y calculadora interactiva de ROI. |
+| **Reportes** | `file-text.svg` | Dictamen pericial automatizado (ISO 45001 / OSHA) con tarjeta de apego normativo dinámica y exportación oficial en HTML/CSV. |
+| **Configuración** | `settings.svg` | Modal emergente compacto (@st.dialog) en 2 columnas para alternar tema (Oscuro/Claro), umbral de sensibilidad y filtros de EPP. |
+| **Riel Permanente** | `chevrons-left.svg` | Modo colapsable estrecho (72px) que mantiene visibles los iconos de navegación sin ocultar la barra de la pantalla. |
+
+Las ventanas de video se abren en el equipo donde se ejecuta Streamlit. Si se accede al panel desde otro equipo, allí solo se verán los controles y las métricas. La demostración y el análisis en vivo usan la cámara por turnos.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -59,12 +62,13 @@
 ├───────────────────┬─────────────────────────────────────────────┤
 │  Navegación       │  Vista Activa                               │
 │  ──────────       │  ────────────                               │
-│  ◈ Demostración   │  [MODO SELECCIONADO]                        │
-│  ◉ Análisis Vivo  │  Telemetría · Detección YOLOv8              │
-│  ▲ Estadísticas   │  Control SPC · Gráficos · Calculadora ROI   │
-│  ≡ Reportes       │  Bitácora Forense · Informes HTML / CSV     │
+│  [■] Demostración │  [MODO SELECCIONADO]                        │
+│  [■] Análisis Vivo│  Telemetría · Detección YOLOv8              │
+│  [■] Estadísticas │  Control SPC · Gráficos · Calculadora ROI   │
+│  [■] Reportes     │  Bitácora Forense · Informes HTML / CSV     │
 │  ──────────────── │                                             │
-│  ⚙ Configuración  │  Modal: Tema, Sensibilidad, Filtros EPP     │
+│  [⚙] Configuración│  Modal Compacto: 2 Columnas · Sin Scroll    │
+│  [«] Contraer Riel│  Alterna barra entre 250px y 72px (Icon-only│
 └───────────────────┴─────────────────────────────────────────────┘
 ```
 
@@ -128,25 +132,50 @@ vigilante-epp/
 │   └── proyecto_base.md            # Especificación base y guía de pitch (feria)
 │
 ├── assets/
-│   └── logo.jpg                    # Logo del sistema
+│   ├── logo.jpg                    # Logo del sistema (fallback)
+│   ├── logo.svg                    # Logo vectorial principal en Base64
+│   └── *.svg                       # Catálogo de iconos vectoriales SVG locales (navegación, telemetría y reportes)
 │
 ├── models/
 │   └── ppe_model.pt                # Modelo YOLOv8 especializado en EPP (~6.2 MB)
 │
 ├── modules/                        # Arquitectura modular del backend
 │   ├── __init__.py
-│   ├── camera.py                   # Captura multihilo desacoplada, buffer O(1) y gestión de hardware
-│   ├── detector.py                 # Inferencia YOLO, tracking y análisis espacial
-│   ├── tracker_manager.py          # Anti-duplicación y cooldown por operario (MOT)
-│   ├── database.py                 # Esquema SQLite, CRUD, sesiones y consultas
-│   ├── metrics.py                  # Capa de sesión Streamlit + analítica y ROI
+│   ├── audit_writer.py             # Persistencia asíncrona desacoplada en SQLite y evidencias en disco
+│   ├── auditor_core.py             # Núcleo base común de inferencia (BaseAuditorService) y renderizado BGR
+│   ├── auditor.py                  # Servicio de auditoría en vivo (LiveAuditorService) conectado a SQLite
+│   ├── camera.py                   # Captura multihilo desacoplada, buffer O(1) y gestión singleton de hardware
+│   ├── camera_sources.py           # Centralización de fuentes de cámara y exclusión mutua de hardware
 │   ├── charts.py                   # Gráficos SPC (Shewhart Run Chart) y severidad con Plotly
+│   ├── database.py                 # Capa SQLite WAL optimizada con incrementos atómicos y consultas agregadas
+│   ├── demo_video.py               # Servicio de demostración en memoria (cero persistencia en BD)
+│   ├── detector.py                 # Inferencia YOLOv8 BGR nativo, tracking y análisis espacial
+│   ├── metrics.py                  # Inicialización de estado y cálculo interactivo de ROI
+│   ├── native_viewer.py            # Visor OpenCV en hilo Win32 dedicado con repintado continuo a 50 FPS
 │   ├── report_generator.py         # Generador de informes HTML forenses (exportables a PDF)
-│   └── samples.py                  # Generador de escenarios sintéticos de demo
+│   ├── samples.py                  # Generador de escenarios sintéticos de demo
+│   ├── tracker_manager.py          # Anti-duplicación y cooldown por operario (MOT)
+│   └── views/                      # Vistas modulares de la interfaz Streamlit
+│       ├── __init__.py             # Exportaciones de vistas
+│       ├── components.py           # Componentes visuales reutilizables y presets
+│       ├── config_dialog.py        # Diálogo modal emergente (@st.dialog)
+│       ├── demo_view.py            # Vista de sandbox de demostración
+│       ├── live_view.py            # Vista de supervisión en vivo
+│       ├── stats_view.py           # Vista de estadísticas, SPC y ROI
+│       └── reports_view.py         # Vista de dictamen pericial, bitácora y exportación
+│
+├── tests/                          # Suite formal de pruebas automatizadas (39 pruebas unitarias al 100% OK)
+│   ├── test_app_navigation.py      # Pruebas de navegación y estado en Streamlit
+│   ├── test_audit_writer.py        # Pruebas de cola asíncrona de auditoría
+│   ├── test_auditor_first_frame.py # Pruebas de primera previsualización y visor nativo
+│   ├── test_camera_frame_sequence.py # Pruebas de integridad de fotogramas de cámara
+│   ├── test_camera_sources.py      # Pruebas de escaneo dinámico y normalización de URLs
+│   └── test_demo_video.py          # Pruebas de demostración en memoria sin persistencia
 │
 ├── styles/                         # Componentes visuales y CSS
 │   ├── __init__.py
-│   └── styles.py                   # Temas (Dark/Light Cockpit), header, cards de estado e incidentes
+│   ├── icons.py                    # Gestor de iconos vectoriales SVG locales y proveedor de data-URIs
+│   └── styles.py                   # Temas (Dark/Light Cockpit), header, cards, riel permanente y botones minimalistas
 │
 └── .streamlit/
     └── config.toml                 # Tema visual de Streamlit
@@ -251,17 +280,32 @@ Entrada de Video
 
 ## Módulos del Sistema
 
+### `modules/auditor.py`
+Servicio de auditoría formal desacoplado en segundo plano (`LiveAuditorService`). Ejecuta un hilo demonio independiente de la UI de Streamlit que orquesta la inferencia continua, tracking MOT, evaluación espacial de EPP y entrega de telemetría en tiempo constante O(1).
+
+### `modules/demo_video.py`
+Servicio de demostración interactiva en memoria (`DemoVideoService`). Réplica exacta de la experiencia visual de Análisis en Vivo (tracking MOT, cajas de operario, banner superior HUD) pero con **cero persistencia en SQLite y cero capturas en disco**. Mantiene incidentes recientes y KPIs en RAM volátil (`collections.deque(maxlen=6)`). Soporta tanto video continuo como fotos subidas y escenarios sintéticos.
+
+### `modules/native_viewer.py`
+Visor nativo de escritorio OpenCV (`LatestFrameNativeViewer`) con un único hilo propietario Win32 (`NativeViewerOwner`). Implementa entrega en tiempo constante O(1) del último fotograma y repintado continuo a ~50 FPS (`waitKey(20)`), evitando congelamientos y pantallas grises durante el warmup inicial de YOLO.
+
+### `modules/audit_writer.py`
+Cola de persistencia transaccional asíncrona (`AuditEventWriter`). Procesa en segundo plano la escritura de eventos en SQLite y la compresión/almacenamiento de evidencias JPG, blindando el motor de visión para mantener una tasa de FPS estable sin latencias de disco.
+
+### `modules/camera_sources.py`
+Controlador centralizado de fuentes de captura y exclusión mutua de hardware (`CAMERA_MODE_LOCK`). Resuelve selectores de dispositivos (cámaras integradas, USB o RTSP) y garantiza una alternancia limpia entre Demostración y Análisis en Vivo sin colisiones en Windows DirectShow.
+
 ### `modules/camera.py`
-Captura de video multihilo desacoplada con backend DirectShow en Windows y buffer O(1). Mantiene el stream vivo en segundo plano de forma independiente a los re-renders de Streamlit.
+Captura de video multihilo desacoplada (`ThreadedCamera` y `CameraStreamManager`) con backend DirectShow en Windows y buffer O(1). Mantiene el stream vivo en segundo plano de forma independiente a los re-renders de Streamlit.
 
 ### `modules/detector.py`
 Motor principal de visión artificial. Soporta inferencia estándar y tracking persistente (ByteTrack). Incluye análisis espacial para asignar detecciones de EPP a cada persona individualmente.
 
 ### `modules/tracker_manager.py`
-Capa de lógica anti-duplicación. Aplica cooldowns individuales por ID de operario (60 s infracciones, 120 s cumplimiento), requiere 2 frames consecutivos para confirmar una alerta y detecta cuándo un operario subsana su infracción.
+Capa de lógica anti-duplicación (`WorkerTrackManager`). Aplica cooldowns individuales por ID de operario (45 s infracciones), requiere 2 frames consecutivos para confirmar una alerta (anti-parpadeo) y purga pistas inactivas.
 
 ### `modules/database.py`
-Esquema relacional SQLite de dos tablas (`camera_sessions` + `camera_events`) con claves foráneas, índices B-Tree y migraciones automáticas seguras. Gestiona múltiples turnos sin borrar historial.
+Esquema relacional SQLite de dos tablas (`camera_sessions` + `camera_events`) con claves foráneas, índices B-Tree y modo concurrente WAL (`PRAGMA journal_mode = WAL`).
 
 ### `modules/charts.py`
 Gráficos interactivos de Control Estadístico de Procesos (SPC / Shewhart Run Chart) y distribución de severidad cromática con Plotly bajo normativas ISO 45001 / OSHA 1910.
@@ -271,6 +315,9 @@ Genera informes HTML auto-contenidos con membrete corporativo, galería de evide
 
 ### `modules/metrics.py`
 Capa de sesión Streamlit y analítica ejecutiva. Conecta el estado de `st.session_state` con la base de datos, calcula el ROI de multas y expone wrappers limpios para la UI.
+
+### `tests/`
+Suite formal de pruebas automatizadas compuestas por 31 pruebas unitarias (`test_demo_video.py`, `test_auditor_first_frame.py`, `test_audit_writer.py`, `test_app_navigation.py`, `test_camera_frame_sequence.py`) que validan la entrega de previsualización, tracking, persistencia y navegación con 100% de éxito.
 
 ---
 

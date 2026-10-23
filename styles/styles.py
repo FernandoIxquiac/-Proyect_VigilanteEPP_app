@@ -1,6 +1,10 @@
+from __future__ import annotations
 import base64
 from pathlib import Path
+from typing import Union, Optional
 import streamlit as st
+from .icons import get_svg_icon, get_svg_data_uri
+
 
 
 def _get_logo_base64() -> str:
@@ -16,8 +20,36 @@ def _get_logo_base64() -> str:
     return ""
 
 
-def get_theme_css(is_dark: bool = True) -> str:
-    """Genera el sistema de diseño CSS basado en variables semánticas sobrias."""
+def get_theme_css(is_dark: bool = True, is_mini: bool = False) -> str:
+    """Genera el sistema de diseño CSS basado en variables semánticas sobrias y modo de riel."""
+    uri_demo = get_svg_data_uri("device-desktop")
+    uri_live = get_svg_data_uri("video")
+    uri_stats = get_svg_data_uri("chart-bar")
+    uri_reports = get_svg_data_uri("file-text")
+    uri_settings = get_svg_data_uri("settings")
+    uri_toggle = get_svg_data_uri("chevrons-left")
+
+    if is_mini:
+        sidebar_width = "72px"
+        sidebar_padding = "8px"
+        button_justify = "center"
+        button_padding = "10px 0"
+        icon_margin_right = "0"
+        toggle_transform = "transform: rotate(180deg) !important;"
+        mini_hide_text = ".stSidebar .stButton button p { display: none !important; }"
+        mini_hide_captions = '.stSidebar div[data-testid="stCaptionContainer"], .sidebar-text-hide { display: none !important; }'
+        logo_max_width = "42px"
+    else:
+        sidebar_width = "250px"
+        sidebar_padding = "12px"
+        button_justify = "flex-start"
+        button_padding = "10px 14px"
+        icon_margin_right = "10px"
+        toggle_transform = ""
+        mini_hide_text = ""
+        mini_hide_captions = ""
+        logo_max_width = "100%"
+
     if is_dark:
         vars_css = """
         --bg-app: #0B111E;
@@ -152,6 +184,13 @@ def get_theme_css(is_dark: bool = True) -> str:
         font-weight: 500 !important;
     }}
 
+    /* Borde sobrio de contraste para toggles y checkboxes en modales y temas claros */
+    div[data-testid="stToggle"] div[data-baseweb="toggle"],
+    div[data-testid="stToggle"] span[data-baseweb="toggle"],
+    div[data-testid="stToggle"] [data-baseweb="toggle"] {{
+        border: 1.5px solid var(--border-strong) !important;
+    }}
+
     /* Sliders Globales */
     div[data-testid="stSlider"],
     div[data-testid="stSlider"] *,
@@ -224,10 +263,31 @@ def get_theme_css(is_dark: bool = True) -> str:
         color: var(--status-safe) !important;
     }}
 
-    /* 3. Sidebar Corporativo */
+    /* 3. Desactivar Colapso Nativo a 0px de Streamlit */
+    button[data-testid="stSidebarCollapseButton"],
+    div[data-testid="collapsedControl"],
+    div[data-testid="stSidebarResizeHandle"] {{
+        display: none !important;
+    }}
+
+    /* 4. Sidebar Corporativo y Dimensiones del Riel Permanente */
     section[data-testid="stSidebar"] {{
         background-color: var(--bg-panel) !important;
         border-right: 1px solid var(--border-subtle) !important;
+        width: {sidebar_width} !important;
+        min-width: {sidebar_width} !important;
+        max-width: {sidebar_width} !important;
+        transition: width 0.2s ease-in-out !important;
+    }}
+    section[data-testid="stSidebar"] > div:first-child,
+    section[data-testid="stSidebar"] div[data-testid="stSidebarContent"] {{
+        width: {sidebar_width} !important;
+        min-width: {sidebar_width} !important;
+        max-width: {sidebar_width} !important;
+        padding-left: {sidebar_padding} !important;
+        padding-right: {sidebar_padding} !important;
+        overflow-x: hidden !important;
+        transition: width 0.2s ease-in-out !important;
     }}
     section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {{
         color: var(--text-secondary) !important;
@@ -236,8 +296,164 @@ def get_theme_css(is_dark: bool = True) -> str:
     section[data-testid="stSidebar"] * {{
         color: var(--text-primary) !important;
     }}
+    .stSidebar img {{
+        max-width: {logo_max_width} !important;
+        margin: 0 auto !important;
+        display: block !important;
+        transition: max-width 0.2s ease-in-out !important;
+    }}
 
-    /* 4. Navegación por Radio en Sidebar y Botón de Configuración */
+    /* Modos reactivos del riel compacto */
+    {mini_hide_text}
+    {mini_hide_captions}
+
+    /* 5. Anclas de Navegacion Invisibles */
+    div[data-testid="stElementContainer"]:has(.nav-anchor),
+    div[data-testid="stVerticalBlock"] > div:has(.nav-anchor) {{
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }}
+
+    /* 6. Botones de Navegacion en Sidebar */
+    .stSidebar .stButton {{
+        width: 100% !important;
+        margin-bottom: 2px !important;
+    }}
+    .stSidebar .stButton > button {{
+        width: 100% !important;
+        border-radius: var(--radius-sm) !important;
+        min-height: 40px !important;
+        font-weight: 600 !important;
+        font-size: 0.88rem !important;
+        letter-spacing: 0.01em !important;
+        transition: all 0.15s ease-in-out !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: {button_justify} !important;
+        padding: {button_padding} !important;
+    }}
+
+    /* Heredar color en etiquetas de texto de botones del sidebar */
+    .stSidebar .stButton button p,
+    .stSidebar .stButton button span {{
+        color: inherit !important;
+        font-weight: 600 !important;
+    }}
+
+    /* Boton Primario (Activo en Navegacion) */
+    .stSidebar .stButton > button[kind="primary"],
+    .stSidebar .stButton > button[data-testid="stBaseButton-primary"] {{
+        background-color: var(--brand-primary) !important;
+        border: 1px solid transparent !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 2px 6px rgba(0, 168, 232, 0.28) !important;
+    }}
+    .stSidebar .stButton > button[kind="primary"] *,
+    .stSidebar .stButton > button[data-testid="stBaseButton-primary"] * {{
+        color: #FFFFFF !important;
+    }}
+    .stSidebar .stButton > button[kind="primary"]:hover,
+    .stSidebar .stButton > button[data-testid="stBaseButton-primary"]:hover {{
+        background-color: var(--brand-primary) !important;
+        border-color: transparent !important;
+        color: #FFFFFF !important;
+        opacity: 0.92 !important;
+        box-shadow: 0 2px 6px rgba(0, 168, 232, 0.35) !important;
+    }}
+
+    /* Forzar texto blanco en botones activos del sidebar con maxima especificidad */
+    section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] p,
+    section[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] span,
+    section[data-testid="stSidebar"] button[kind="primary"] p,
+    section[data-testid="stSidebar"] button[kind="primary"] span {{
+        color: #FFFFFF !important;
+    }}
+
+    /* Boton Secundario (Inactivo en Navegacion - Diseno Minimalista Ghost / Flat) */
+    .stSidebar .stButton > button[kind="secondary"],
+    .stSidebar .stButton > button[data-testid="stBaseButton-secondary"],
+    .stSidebar .stButton > button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]) {{
+        background-color: transparent !important;
+        border: 1px solid transparent !important;
+        color: var(--text-secondary) !important;
+        box-shadow: none !important;
+    }}
+    .stSidebar .stButton > button[kind="secondary"] *,
+    .stSidebar .stButton > button[data-testid="stBaseButton-secondary"] *,
+    .stSidebar .stButton > button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]) * {{
+        color: inherit !important;
+    }}
+    .stSidebar .stButton > button[kind="secondary"]:hover,
+    .stSidebar .stButton > button[data-testid="stBaseButton-secondary"]:hover,
+    .stSidebar .stButton > button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]):hover {{
+        background-color: var(--brand-primary-soft) !important;
+        border-color: transparent !important;
+        color: var(--brand-primary) !important;
+    }}
+    .stSidebar .stButton > button[kind="secondary"]:hover *,
+    .stSidebar .stButton > button[data-testid="stBaseButton-secondary"]:hover *,
+    .stSidebar .stButton > button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]):hover * {{
+        color: inherit !important;
+    }}
+
+    /* 7. Iconos SVG en Botones via CSS Mask */
+    .stSidebar .stButton button::before {{
+        content: '';
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        background-color: currentColor;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        margin-right: {icon_margin_right} !important;
+    }}
+
+    div[data-testid="stElementContainer"]:has(.nav-anchor[data-nav="demo"]) + div[data-testid="stElementContainer"] .stButton button::before,
+    div[data-testid="stVerticalBlock"] > div:has(.nav-anchor[data-nav="demo"]) + div .stButton button::before {{
+        -webkit-mask-image: url('{uri_demo}') !important;
+        mask-image: url('{uri_demo}') !important;
+    }}
+
+    div[data-testid="stElementContainer"]:has(.nav-anchor[data-nav="live"]) + div[data-testid="stElementContainer"] .stButton button::before,
+    div[data-testid="stVerticalBlock"] > div:has(.nav-anchor[data-nav="live"]) + div .stButton button::before {{
+        -webkit-mask-image: url('{uri_live}') !important;
+        mask-image: url('{uri_live}') !important;
+    }}
+
+    div[data-testid="stElementContainer"]:has(.nav-anchor[data-nav="stats"]) + div[data-testid="stElementContainer"] .stButton button::before,
+    div[data-testid="stVerticalBlock"] > div:has(.nav-anchor[data-nav="stats"]) + div .stButton button::before {{
+        -webkit-mask-image: url('{uri_stats}') !important;
+        mask-image: url('{uri_stats}') !important;
+    }}
+
+    div[data-testid="stElementContainer"]:has(.nav-anchor[data-nav="reports"]) + div[data-testid="stElementContainer"] .stButton button::before,
+    div[data-testid="stVerticalBlock"] > div:has(.nav-anchor[data-nav="reports"]) + div .stButton button::before {{
+        -webkit-mask-image: url('{uri_reports}') !important;
+        mask-image: url('{uri_reports}') !important;
+    }}
+
+    div[data-testid="stElementContainer"]:has(.nav-anchor[data-nav="settings"]) + div[data-testid="stElementContainer"] .stButton button::before,
+    div[data-testid="stVerticalBlock"] > div:has(.nav-anchor[data-nav="settings"]) + div .stButton button::before {{
+        -webkit-mask-image: url('{uri_settings}') !important;
+        mask-image: url('{uri_settings}') !important;
+    }}
+
+    div[data-testid="stElementContainer"]:has(.nav-anchor[data-nav="toggle"]) + div[data-testid="stElementContainer"] .stButton button::before,
+    div[data-testid="stVerticalBlock"] > div:has(.nav-anchor[data-nav="toggle"]) + div .stButton button::before {{
+        -webkit-mask-image: url('{uri_toggle}') !important;
+        mask-image: url('{uri_toggle}') !important;
+        {toggle_transform}
+    }}
+
+    /* Compatibilidad con Radio Buttons en Sidebar (si existieran) */
     .stSidebar .stRadio > div {{ gap: 6px; }}
     .stSidebar .stRadio label {{
         padding: 9px 14px;
@@ -260,25 +476,6 @@ def get_theme_css(is_dark: bool = True) -> str:
         color: var(--text-primary) !important;
         letter-spacing: 0.01em;
     }}
-    .stSidebar .stButton > button {{
-        border-radius: var(--radius-sm) !important;
-        background-color: var(--bg-card) !important;
-        color: var(--text-primary) !important;
-        border: 1px solid var(--border-strong) !important;
-        font-weight: 600 !important;
-        letter-spacing: 0.02em !important;
-    }}
-    .stSidebar .stButton > button * {{
-        color: var(--text-primary) !important;
-    }}
-    .stSidebar .stButton > button:hover {{
-        border-color: var(--brand-primary) !important;
-        color: var(--brand-primary) !important;
-        background-color: var(--brand-primary-soft) !important;
-    }}
-    .stSidebar .stButton > button:hover * {{
-        color: var(--brand-primary) !important;
-    }}
 
     /* 5. Tarjetas de Métricas Nativas (st.metric) */
     div[data-testid="stMetric"] {{
@@ -289,19 +486,33 @@ def get_theme_css(is_dark: bool = True) -> str:
         border-radius: var(--radius-md) !important;
         box-shadow: var(--shadow-card) !important;
     }}
-    div[data-testid="stMetricLabel"] p {{
+    div[data-testid="stMetricLabel"],
+    div[data-testid="stMetricLabel"] *,
+    div[data-testid="stMetricLabel"] label,
+    div[data-testid="stMetricLabel"] p,
+    div[data-testid="stMetricLabel"] span,
+    div[data-testid="stMetricLabel"] div {{
         color: var(--text-secondary) !important;
-        font-size: 0.70rem !important;
-        font-weight: 600 !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.05em !important;
+        letter-spacing: 0.04em !important;
     }}
+    div[data-testid="stMetricValue"],
+    div[data-testid="stMetricValue"] *,
     div[data-testid="stMetricValue"] div {{
         color: var(--text-primary) !important;
         font-family: 'JetBrains Mono', monospace !important;
         font-size: 1.35rem !important;
         font-weight: 700 !important;
         font-variant-numeric: tabular-nums !important;
+    }}
+    div[data-testid="stMetricDelta"],
+    div[data-testid="stMetricDelta"] *,
+    div[data-testid="stMetricDelta"] div,
+    div[data-testid="stMetricDelta"] span {{
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
     }}
 
     /* 6. Visor de Cámara e Imágenes */
@@ -500,7 +711,14 @@ def get_theme_css(is_dark: bool = True) -> str:
         stroke: var(--border-strong) !important;
     }}
 
-    /* 15. Modal de Configuracion - Dark/Light Theme Completo */
+    /* 15. Modal de Configuracion - Compacto y Dark/Light Theme Completo */
+    div[data-testid="stDialog"] {{
+        padding: 1.2rem 1.5rem !important;
+    }}
+    div[data-testid="stDialog"] div[data-testid="stVerticalBlock"],
+    div[role="dialog"] div[data-testid="stVerticalBlock"] {{
+        gap: 0.45rem !important;
+    }}
     div[data-testid="stDialog"] > div,
     div[role="dialog"],
     div[data-testid="stModal"] > div,
@@ -590,19 +808,110 @@ def get_theme_css(is_dark: bool = True) -> str:
         background-color: rgba(0, 0, 0, 0.65) !important;
         backdrop-filter: blur(2px) !important;
     }}
+
+    /* Clases utilitarias semanticas de diseno industrial */
+    .section-header {{
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        color: var(--text-secondary) !important;
+        margin-bottom: 4px !important;
+    }}
+
+    .preset-hint {{
+        font-size: 0.72rem !important;
+        color: var(--text-secondary) !important;
+        margin: 4px 0 2px 0 !important;
+    }}
+
+    .feed-header {{
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        color: var(--brand-primary) !important;
+        margin-bottom: 6px !important;
+    }}
+
+    .status-indicator-stopped {{
+        text-align: center !important;
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        color: var(--text-secondary) !important;
+        margin-top: 4px !important;
+    }}
+
+    .status-indicator-running {{
+        text-align: center !important;
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        color: var(--status-safe) !important;
+        margin-top: 4px !important;
+    }}
+
+    .hud-card {{
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-left: 5px solid var(--brand-primary) !important;
+        border-radius: var(--radius-md) !important;
+        padding: 28px 20px !important;
+        text-align: center !important;
+        box-shadow: var(--shadow-card) !important;
+    }}
+
+    .hud-card-title {{
+        font-size: 1.15rem !important;
+        font-weight: 800 !important;
+        color: var(--brand-primary) !important;
+        margin-bottom: 8px !important;
+    }}
+
+    .hud-card-desc {{
+        font-size: 0.88rem !important;
+        color: var(--text-secondary) !important;
+        max-width: 520px !important;
+        margin: 0 auto !important;
+        line-height: 1.45 !important;
+    }}
+
+    .layout-spacer {{
+        margin-top: 8px !important;
+        margin-bottom: 8px !important;
+    }}
+
+    .badge-indicator {{
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        font-size: 0.68rem !important;
+        font-weight: 800 !important;
+        padding: 2px 8px !important;
+        border-radius: 4px !important;
+    }}
+
+    .kpi-subtext {{
+        font-size: 0.80rem !important;
+        color: var(--text-secondary) !important;
+        line-height: 1.3 !important;
+    }}
 </style>
 """
 
 
-def apply_styles(theme_mode=None):
-    """Inyecta las variables y estilos CSS según el modo activo."""
+def apply_styles(theme_mode: bool | str = True, is_mini: bool = False) -> None:
+    """Inyecta las variables y estilos CSS según el modo activo y dimensiones del riel."""
     if theme_mode is not None:
         is_dark = theme_mode if isinstance(theme_mode, bool) else ("Oscuro" in str(theme_mode) or "Dark" in str(theme_mode))
     elif "config" in st.session_state and "is_dark" in st.session_state.config:
         is_dark = st.session_state.config["is_dark"]
     else:
         is_dark = st.session_state.get("is_dark", True)
-    st.markdown(get_theme_css(is_dark), unsafe_allow_html=True)
+
+    if not is_mini and "sidebar_mini" in st.session_state:
+        is_mini = st.session_state["sidebar_mini"]
+
+    st.markdown(get_theme_css(is_dark=is_dark, is_mini=is_mini), unsafe_allow_html=True)
 
 
 def render_top_header(is_dark: bool = True) -> str:
@@ -613,6 +922,8 @@ def render_top_header(is_dark: bool = True) -> str:
         if logo_src
         else '<div style="font-family:\'JetBrains Mono\',monospace; font-weight:800; font-size:13px; color:var(--brand-primary); background:var(--brand-primary-soft); border:1px solid var(--brand-primary); padding:4px 8px; border-radius:6px;">EPP</div>'
     )
+    icon_active = get_svg_icon("shield-check", size=13, color="#10B981", stroke_width=2.2)
+    icon_cpu = get_svg_icon("cpu", size=13, color="var(--text-secondary)", stroke_width=2.0)
 
     return (
         f'<div style="display:flex; justify-content:space-between; align-items:center; '
@@ -627,8 +938,8 @@ def render_top_header(is_dark: bool = True) -> str:
         f'<div style="font-size:0.72rem; color:var(--text-secondary);">Monitoreo Inteligente de Seguridad Industrial en Tiempo Real</div>'
         f'</div></div>'
         f'<div style="display:flex; align-items:center; gap:8px;">'
-        f'<span style="display:inline-flex; align-items:center; gap:5px; background:rgba(16,185,129,0.12); color:#10B981; border:1px solid rgba(16,185,129,0.35); padding:3px 9px; border-radius:6px; font-size:0.68rem; font-family:\'JetBrains Mono\',monospace; font-weight:600;">&#x25CF; SISTEMA ACTIVO</span>'
-        f'<span style="display:inline-flex; align-items:center; background:var(--bg-elevated); color:var(--text-secondary); border:1px solid var(--border-strong); padding:3px 9px; border-radius:6px; font-size:0.68rem; font-family:\'JetBrains Mono\',monospace; font-weight:600;">YOLOv8 + ByteTrack</span>'
+        f'<span style="display:inline-flex; align-items:center; gap:6px; background:rgba(16,185,129,0.12); color:#10B981; border:1px solid rgba(16,185,129,0.35); padding:3px 9px; border-radius:6px; font-size:0.68rem; font-family:\'JetBrains Mono\',monospace; font-weight:600;">{icon_active} SISTEMA ACTIVO</span>'
+        f'<span style="display:inline-flex; align-items:center; gap:6px; background:var(--bg-elevated); color:var(--text-secondary); border:1px solid var(--border-strong); padding:3px 9px; border-radius:6px; font-size:0.68rem; font-family:\'JetBrains Mono\',monospace; font-weight:600;">{icon_cpu} YOLOv8 + ByteTrack</span>'
         f'</div></div>'
     )
 
@@ -636,19 +947,20 @@ def render_top_header(is_dark: bool = True) -> str:
 def render_status_card(state_type: str, title: str, message: str, is_dark: bool = True, personnel_count: int = 0) -> str:
     """Tarjeta Semáforo ISO 3864 con soporte completo para: safe, warning, danger y standby."""
     palette = {
-        "safe":    {"color": "#10B981", "bg": "rgba(16, 185, 129, 0.10)", "border": "rgba(16, 185, 129, 0.40)", "label": "SEGURO"},
-        "warning": {"color": "#F59E0B", "bg": "rgba(245, 158, 11, 0.10)", "border": "rgba(245, 158, 11, 0.40)", "label": "ADVERTENCIA"},
-        "danger":  {"color": "#EF4444", "bg": "rgba(239, 68, 68, 0.12)",  "border": "rgba(239, 68, 68, 0.45)",  "label": "CRÍTICO"},
-        "standby": {"color": "#00A8E8", "bg": "rgba(0, 168, 232, 0.10)",  "border": "rgba(0, 168, 232, 0.35)",  "label": "EN ESPERA"},
+        "safe":    {"color": "#10B981", "bg": "rgba(16, 185, 129, 0.10)", "border": "rgba(16, 185, 129, 0.40)", "label": "SEGURO", "icon": "shield-check"},
+        "warning": {"color": "#F59E0B", "bg": "rgba(245, 158, 11, 0.10)", "border": "rgba(245, 158, 11, 0.40)", "label": "ADVERTENCIA", "icon": "alert-triangle"},
+        "danger":  {"color": "#EF4444", "bg": "rgba(239, 68, 68, 0.12)",  "border": "rgba(239, 68, 68, 0.45)",  "label": "CRÍTICO", "icon": "shield-x"},
+        "standby": {"color": "#00A8E8", "bg": "rgba(0, 168, 232, 0.10)",  "border": "rgba(0, 168, 232, 0.35)",  "label": "EN ESPERA", "icon": "clock"},
     }
     cfg = palette.get(state_type, palette["standby"])
+    status_icon = get_svg_icon(cfg["icon"], size=14, color=cfg["color"], stroke_width=2.2)
 
     return (
         f'<div style="background-color:var(--bg-card); border:2px solid {cfg["border"]}; border-radius:8px; padding:10px 14px; min-height:64px; '
         f'display:flex; align-items:center; justify-content:space-between; gap:12px; box-shadow:var(--shadow-card);">'
         f'<div style="display:flex; flex-direction:column; gap:2px;">'
         f'<div style="display:flex; align-items:center; gap:8px;">'
-        f'<span style="font-size:0.65rem; font-family:\'JetBrains Mono\',monospace; font-weight:700; color:{cfg["color"]}; background:{cfg["bg"]}; padding:2px 6px; border-radius:4px;">&#x25CF; {cfg["label"]}</span>'
+        f'<span style="display:inline-flex; align-items:center; gap:5px; font-size:0.65rem; font-family:\'JetBrains Mono\',monospace; font-weight:700; color:{cfg["color"]}; background:{cfg["bg"]}; padding:3px 7px; border-radius:4px;">{status_icon} {cfg["label"]}</span>'
         f'<span style="font-size:0.88rem; font-weight:700; color:var(--text-primary);">{title}</span>'
         f'</div>'
         f'<div style="font-size:0.74rem; color:var(--text-secondary);">{message}</div>'
@@ -663,17 +975,18 @@ def render_status_card(state_type: str, title: str, message: str, is_dark: bool 
 def render_incident_card(timestamp: str, title: str, badge_type: str = "danger", is_dark: bool = True) -> str:
     """Tarjeta compacta de bitácora con acento lateral semántico y tipografía monoespaciada para la hora."""
     badges = {
-        "danger":  {"color": "#EF4444", "bg": "rgba(239, 68, 68, 0.12)",  "border": "rgba(239, 68, 68, 0.35)",  "text": "INFRACCIÓN"},
-        "warning": {"color": "#F59E0B", "bg": "rgba(245, 158, 11, 0.12)", "border": "rgba(245, 158, 11, 0.35)", "text": "ADVERTENCIA"},
-        "safe":    {"color": "#10B981", "bg": "rgba(16, 185, 129, 0.12)", "border": "rgba(16, 185, 129, 0.35)", "text": "CUMPLIMIENTO"},
+        "danger":  {"color": "#EF4444", "bg": "rgba(239, 68, 68, 0.12)",  "border": "rgba(239, 68, 68, 0.35)",  "text": "INFRACCIÓN", "icon": "shield-x"},
+        "warning": {"color": "#F59E0B", "bg": "rgba(245, 158, 11, 0.12)", "border": "rgba(245, 158, 11, 0.35)", "text": "ADVERTENCIA", "icon": "alert-triangle"},
+        "safe":    {"color": "#10B981", "bg": "rgba(16, 185, 129, 0.12)", "border": "rgba(16, 185, 129, 0.35)", "text": "CUMPLIMIENTO", "icon": "shield-check"},
     }
     b = badges.get(badge_type, badges["safe"])
+    b_icon = get_svg_icon(b["icon"], size=12, color=b["color"], stroke_width=2.0)
 
     return (
         f'<div style="background-color:var(--bg-card); border:1px solid {b["border"]}; border-radius:6px; padding:8px 12px; margin-bottom:6px;">'
         f'<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">'
         f'<span style="font-size:0.70rem; color:var(--text-secondary); font-family:\'JetBrains Mono\',monospace; font-weight:600;">{timestamp}</span>'
-        f'<span style="font-size:0.62rem; font-family:\'JetBrains Mono\',monospace; font-weight:700; background:{b["bg"]}; color:{b["color"]}; border:1px solid {b["border"]}; padding:1px 6px; border-radius:4px;">{b["text"]}</span>'
+        f'<span style="display:inline-flex; align-items:center; gap:4px; font-size:0.62rem; font-family:\'JetBrains Mono\',monospace; font-weight:700; background:{b["bg"]}; color:{b["color"]}; border:1px solid {b["border"]}; padding:2px 6px; border-radius:4px;">{b_icon} {b["text"]}</span>'
         f'</div>'
         f'<div style="font-size:0.80rem; font-weight:600; color:var(--text-primary); line-height:1.25;">{title}</div>'
         f'</div>'

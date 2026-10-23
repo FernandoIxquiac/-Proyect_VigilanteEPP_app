@@ -156,3 +156,33 @@ El nuevo diseño organiza la pantalla en un **Grid Ejecutivo de Vista Única (Si
   `--text-muted` en dark mode: `#64748B` → `#94A3B8` (Slate-400).
 - **Razón:** El valor anterior `#94A3B8` sobre fondo `#111827` producía una relación de contraste ~3.5:1, por debajo del mínimo WCAG AA de 4.5:1 para texto pequeño. El nuevo valor `#CBD5E1` supera ese umbral.
 - **Solo afecta Modo Oscuro.** Los valores de Modo Claro no se modificaron.
+
+---
+
+### v4.2 — Navegación Industrial, Riel Permanente y Refinamiento Semántico (2026-10-20)
+
+#### 6.4 Navegación Minimalista por Botones (Ghost / Flat Navigation)
+- **Cambio:** Se reemplazó el selector `st.radio` por botones individuales reactivos integrados con `st.session_state.current_page`.
+- **Estilo Visual:** Se abandonaron las cajas grises con bordes duros.
+  - *Inactivo:* Fondo transparente (`background: transparent`), sin bordes (`border: 1px solid transparent`), texto e icono en `var(--text-secondary)`.
+  - *Hover:* Relleno sutil `var(--brand-primary-soft)` y color de acento `var(--brand-primary)`.
+  - *Activo (`kind="primary"`):* Relleno plano corporativo `var(--brand-primary)`, texto e icono en blanco `#FFFFFF` con sombra sutil de elevación.
+- **Herencia Cromática:** Se implementó `.stSidebar .stButton button p, .stSidebar .stButton button span { color: inherit !important; }`, garantizando que el texto y el icono cambien de color sincronizadamente en todos los estados.
+
+#### 6.5 Iconografía Vectorial SVG Local con CSS Mask
+- **Cambio:** Eliminación de glifos de texto Unicode en la barra de navegación en favor de iconos SVG locales vectoriales ubicados en `assets/` (`device-desktop.svg`, `video.svg`, `chart-bar.svg`, `file-text.svg`, `settings.svg`, `chevrons-left.svg`).
+- **Implementación:** El módulo `styles/icons.py` proporciona `get_svg_data_uri(name)` codificado con `urllib.parse.quote()` y protegido con `@lru_cache`. El CSS aplica las máscaras vectoriales mediante `-webkit-mask` y `mask` con `background-color: currentColor;`, adaptándose automáticamente a la paleta del estado del botón sin llamadas a la red.
+
+#### 6.6 Riel Lateral Permanente (72px / 250px)
+- **Cambio:** Se inhabilitó el colapso nativo a 0px de Streamlit (`button[data-testid="stSidebarCollapseButton"]` y `div[data-testid="collapsedControl"]` con `display: none !important;`).
+- **Comportamiento:** La barra lateral nunca desaparece de la pantalla. El usuario puede alternar entre:
+  - *Modo Expandido:* Ancho de 250px con iconos alineados a la izquierda y etiquetas descriptivas legibles.
+  - *Modo Riel Compacto (`sidebar_mini=True`):* Ancho forzado de 72px, textos ocultos mediante `.stSidebar .stButton button p { display: none !important; }`, iconos SVG centrados y rotación a 180° del icono de colapso para indicar expansión.
+
+#### 6.7 Modal de Configuración Compacto (Sin Scroll)
+- **Cambio:** Se eliminaron 6 separadores pesados `st.divider()`, se organizaron los controles en 2 columnas (Tema Visual junto a Filtros EPP; Motor IA junto a Sesión Activa) y se redujo el padding y espaciado vertical (`div[data-testid="stDialog"] { gap: 0.45rem }`). Todo el panel se visualiza en una sola vista sin requerir scroll.
+- **Eliminación de advertencias:** Se eliminó la llamada redundante a `st.rerun()` dentro de los callbacks `on_change`, suprimiendo la alerta de advertencia en cabecera.
+
+#### 6.8 Tarjeta Pericial Dinámica con Tokens Semánticos
+- **Cambio:** La tarjeta de diagnóstico en la sección de Reportes sustituyó los fondos oscuros fijos por tokens semánticos del sistema (`var(--bg-card)`, `var(--border-subtle)`, `var(--text-primary)`, `var(--text-secondary)`).
+- **Resultado:** Visualización limpia, nítida y con alto contraste tanto en Modo Claro como en Modo Oscuro.

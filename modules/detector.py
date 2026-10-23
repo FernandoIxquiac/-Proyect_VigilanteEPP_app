@@ -37,18 +37,20 @@ def load_detector_model():
     except Exception as e:
         return None, f"Modo Simulación Visual (Error: {e})"
 
-def detect_objects(image_bgr, model, conf_threshold=0.45, filter_masks=True, check_helmet=True, check_vest=True, use_tracking=False):
+def detect_objects(image_bgr, model, conf_threshold=0.45, filter_masks=True, check_helmet=True, check_vest=True, use_tracking=False, return_rgb=False):
     """
     Ejecuta la inferencia de YOLO sobre una imagen en formato BGR (OpenCV).
     Soporta Multi-Object Tracking (ByteTrack) cuando use_tracking=True para asignar IDs persistentes.
+    Retorna directamente en formato BGR si return_rgb=False (cero conversiones de color),
+    o en RGB si return_rgb=True.
     Retorna:
-        annotated_image_rgb (np.ndarray): Imagen con cajas delimitadoras en RGB.
+        annotated_image (np.ndarray): Imagen con cajas delimitadoras en BGR (o RGB si return_rgb=True).
         persons_count (int): Cantidad de personas detectadas.
         detections_list (list): Lista de detecciones con clase, confianza, etiquetas y track_id.
     """
     if model is None:
-        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
-        return image_rgb, 1, [{
+        annotated_image = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB) if return_rgb else image_bgr.copy()
+        return annotated_image, 1, [{
             "label": "Person",
             "label_es": "Persona",
             "confidence": 98.5,
@@ -91,7 +93,7 @@ def detect_objects(image_bgr, model, conf_threshold=0.45, filter_masks=True, che
             results = model(image_bgr, conf=conf_threshold, verbose=False)
 
     annotated_bgr = results[0].plot()
-    annotated_rgb = cv2.cvtColor(annotated_bgr, cv2.COLOR_BGR2RGB)
+    annotated_image = cv2.cvtColor(annotated_bgr, cv2.COLOR_BGR2RGB) if return_rgb else annotated_bgr
     
     detections_list = []
     persons_count = 0
@@ -135,7 +137,7 @@ def detect_objects(image_bgr, model, conf_threshold=0.45, filter_masks=True, che
         if relevant:
             persons_count = max(1, len(relevant) // 2 or 1)
 
-    return annotated_rgb, persons_count, detections_list
+    return annotated_image, persons_count, detections_list
 
 def analyze_workers_spatial(detections_list, check_helmet=True, check_vest=True):
     """

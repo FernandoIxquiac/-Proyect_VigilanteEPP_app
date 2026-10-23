@@ -1,3 +1,4 @@
+import os
 import cv2
 import threading
 import time
@@ -20,12 +21,19 @@ class ThreadedCamera:
         self.lock = threading.Lock()
         self.thread = None
         self.consecutive_drops = 0
+        self.frame_sequence = 0
+        self.captured_at = 0.0
 
     def start(self):
         """
         Inicializa el hardware de captura y arranca el hilo de lectura continua.
         Retorna True si la conexión fue exitosa.
         """
+        if self.thread is not None and self.thread.is_alive():
+            return bool(
+                self.is_running and self.cap is not None and self.cap.isOpened()
+            )
+
         if self.is_running and self.cap is not None and self.cap.isOpened():
             return True
 
@@ -38,7 +46,10 @@ class ThreadedCamera:
                 if not self.cap.isOpened():
                     self.cap = cv2.VideoCapture(self.source)
             else:
-                # Flujo RTSP / IP / Archivo
+                # Flujo RTSP / IP / Archivo: Opciones optimizadas de bajo retardo para FFmpeg
+                os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = (
+                    "rtsp_transport;tcp|max_delay;500000|timeout;5000000"
+                )
                 self.cap = cv2.VideoCapture(self.source)
         except Exception:
             self.is_running = False
@@ -79,15 +90,33 @@ class ThreadedCamera:
                 ret, frame = self.cap.read()
                 if ret and frame is not None:
                     with self.lock:
+                        if not self.is_running:
+                            break
                         self.frame = frame
                         self.ret = True
+                        self.frame_sequence += 1
+                        self.captured_at = time.monotonic()
                     self.consecutive_drops = 0
                 else:
                     self.consecutive_drops += 1
                     # Tolerancia a caídas: solo se declara fallo si supera ~1.5 seg continuos sin señal
                     if self.consecutive_drops > 45:
+                        # Para flujos de red IP, intentar una reconexión rápida ante micro-cortes de Wi-Fi
+                        if isinstance(self.source, str) and self.is_running and self.consecutive_drops < 120:
+                            try:
+                                if self.cap:
+                                    self.cap.release()
+                                time.sleep(0.3)
+                                self.cap = cv2.VideoCapture(self.source)
+                                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                                self.consecutive_drops = 0
+                                continue
+                            except Exception:
+                                pass
+
                         with self.lock:
                             self.ret = False
+                            self.is_running = False
                         break
             except Exception:
                 break
@@ -103,22 +132,36 @@ class ThreadedCamera:
                 return True, self.frame.copy()
             return False, None
 
+    def read_with_metadata(self):
+        """Retorna el cuadro más reciente con su secuencia y tiempo de captura."""
+        with self.lock:
+            if self.frame is not None and self.ret:
+                return (
+                    True,
+                    self.frame.copy(),
+                    self.frame_sequence,
+                    self.captured_at,
+                )
+            return False, None, self.frame_sequence, self.captured_at
+
     def stop(self):
         """
         Detiene el hilo de lectura y libera el recurso de video de forma limpia.
         """
         self.is_running = False
-        if self.thread and self.thread.is_alive():
-            self.thread.join(timeout=1.0)
         if self.cap:
             try:
                 self.cap.release()
             except Exception:
                 pass
             self.cap = None
-        self.frame = None
-        self.ret = False
-        self.consecutive_drops = 0
+        if self.thread and self.thread.is_alive():
+            self.thread.join(timeout=1.0)
+        with self.lock:
+            self.frame = None
+            self.ret = False
+            self.captured_at = 0.0
+            self.consecutive_drops = 0
 
 
 class CameraStreamManager:
@@ -139,6 +182,9 @@ class CameraStreamManager:
                     return self.current_stream
                 # Si cambió la fuente de video o la actual no está corriendo, detenerla
                 self.current_stream.stop()
+                if (self.current_stream.thread is not None and
+                        self.current_stream.thread.is_alive()):
+                    return self.current_stream
                 self.current_stream = None
 
             self.current_source = source
@@ -149,8 +195,10 @@ class CameraStreamManager:
         with self._lock:
             if self.current_stream is not None:
                 self.current_stream.stop()
-                self.current_stream = None
-                self.current_source = None
+                if (self.current_stream.thread is None or
+                        not self.current_stream.thread.is_alive()):
+                    self.current_stream = None
+                    self.current_source = None
 
 
 @st.cache_resource

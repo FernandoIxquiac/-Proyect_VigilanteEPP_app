@@ -8,12 +8,13 @@
 **Vigilante EPP** es una aplicación de visión artificial para la supervisión y auditoría en tiempo real del uso de Equipo de Protección Personal (casco, chaleco reflectante) en plantas industriales y obras.
 
 * **Modo de Operación:** 100% Local / Offline.
-* **Interfaz de Usuario:** Dashboard interactivo en Streamlit organizado en 5 secciones mediante menú lateral de navegación y diálogo modal:
-  1. `◈ Demostración`: Sandbox interactivo para probar el modelo en fotografías o escenas sintéticas sin almacenar datos en la base de datos.
-  2. `◉ Análisis en Vivo`: Monitoreo en directo por webcam/RTSP con tracking multi-operario (ByteTrack), HUD semafórico y registro automático de infracciones.
-  3. `▲ Estadísticas`: Panel gerencial con KPIs, gráficos de control estadístico (SPC Shewhart Run Chart), distribución de severidad cromática y calculadora interactiva de ROI.
-  4. `≡ Reportes`: Dictamen pericial automatizado (ISO 45001 / OSHA), bitácora forense de auditoría y exportación oficial en HTML y CSV.
-  5. `⚙ Configuración`: Modal emergente (@st.dialog) para alternar tema visual, ajustar sensibilidad/umbral (%) y activar/desactivar filtros de EPP.
+* **Interfaz de Usuario:** Dashboard interactivo en Streamlit organizado mediante barra de navegación lateral permanente con modo riel colapsable (72px compacto / 250px expandido), botones minimalistas (Ghost/Flat) con iconos vectoriales SVG locales y diálogo modal de configuración:
+  1. `Demostración` (icono `device-desktop`): Sandbox interactivo para probar el modelo en fotografías o escenas sintéticas sin almacenar datos en la base de datos.
+  2. `Análisis en Vivo` (icono `video`): Monitoreo en directo por webcam/RTSP con tracking multi-operario (ByteTrack), HUD semafórico y registro automático de infracciones.
+  3. `Estadísticas` (icono `chart-bar`): Panel gerencial con KPIs, gráficos de control estadístico (SPC Shewhart Run Chart), distribución de severidad cromática y calculadora interactiva de ROI.
+  4. `Reportes` (icono `file-text`): Dictamen pericial automatizado (ISO 45001 / OSHA) con tarjeta dinámica sensible al tema, bitácora forense de auditoría y exportación oficial en HTML y CSV.
+  5. `Configuración` (icono `settings`): Modal emergente compacto (@st.dialog) en dos columnas para alternar tema visual, ajustar sensibilidad/umbral (%) y activar/desactivar filtros de EPP sin scroll vertical.
+  6. `Riel Permanente` (icono `chevrons-left`): Control reactivo para alternar entre vista completa y riel estrecho de solo iconos sin ocultar la barra de la pantalla.
 
 ---
 
@@ -22,13 +23,14 @@
 | Capa | Tecnologías | Notas |
 |---|---|---|
 | **Lenguaje** | Python 3.9+ | Multiplataforma (Windows y Linux) |
-| **Frontend / UI** | Streamlit (≥ 1.30) | Componentes reactivos, SessionState y tema personalizado |
-| **Visión Artificial** | Ultralytics YOLOv8, OpenCV 4.8+ | Inferencia local en CPU o GPU (CUDA) |
-| **Tracking** | ByteTrack (MOT) | Persistencia de IDs entre frames |
+| **Frontend / UI** | Streamlit (≥ 1.30) | Componentes reactivos, SessionState, vistas modulares en `modules/views/` |
+| **Visión Artificial** | Ultralytics YOLOv8, OpenCV 4.8+ | Inferencia local BGR nativa (zero-copy) en CPU o GPU (CUDA) |
+| **Núcleo de Inferencia** | `modules/auditor_core.py` | Clase base `BaseAuditorService` con pacing de FPS y HUD unificado |
+| **Tracking** | ByteTrack (MOT) | Persistencia de IDs entre frames con filtro anti-parpadeo |
 | **Visualización** | Plotly (≥ 5.0) | Gráficos de Control Estadístico de Procesos (SPC) y barras cromáticas |
-| **Base de Datos** | SQLite (`data/vigilante_epp.db`) | Esquema relacional normalizado: sesiones y eventos con índices B-Tree |
-| **Estilos** | CSS personalizado (`styles/styles.py`) | Soporte tema Dark/Light, cards HUD y badges semafóricos |
-| **Reportes** | HTML5 / CSS auto-contenido | Convertibles a PDF (ISO 45001 / OSHA 1910) |
+| **Base de Datos** | SQLite (`data/vigilante_epp.db`) | Esquema relacional normalizado con modo WAL e incrementos atómicos |
+| **Estilos** | CSS personalizado (`styles/styles.py`) | Variables de tema Dark/Light, clases utilitarias semánticas y badges |
+| **Reportes** | HTML5 / CSS auto-contenido | Convertibles a PDF (ISO 45001 / OSHA 1910) y CSV forense |
 
 ---
 
@@ -37,47 +39,67 @@
 ```mermaid
 flowchart TD
     subgraph Entrada ["1. Fuentes de Entrada"]
-        CAM["Webcam / RTSP (Vista en Vivo)"]
-        IMG["Imágenes Subidas / Sintéticas (Auditoría)"]
+        CAM["Webcam USB / RTSP (Flujo en Vivo)"]
+        IMG["Imágenes Subidas / Sintéticas (Sandbox)"]
     end
 
     subgraph Captura ["2. Captura Desacoplada Multihilo"]
         STREAM["modules/camera.py (CameraStreamManager / ThreadedCamera)"]
+        SOURCES["modules/camera_sources.py (CAMERA_MODE_LOCK & Resolver)"]
     end
 
-    subgraph Deteccion ["3. Detección y Espacial"]
-        YOLO["YOLOv8 (models/ppe_model.pt)"]
+    subgraph Core ["3. Núcleo Común de Inferencia BGR"]
+        CORE_AUDITOR["modules/auditor_core.py (BaseAuditorService & annotate_auditor_frame)"]
+        AUDITOR["modules/auditor.py (LiveAuditorService)"]
+        DEMO_VIDEO["modules/demo_video.py (DemoVideoService)"]
+        YOLO["YOLOv8 BGR Nativo (models/ppe_model.pt)"]
         TRACK["WorkerTrackManager (ByteTrack MOT)"]
         SPATIAL["Análisis Espacial (Caja Persona vs EPP)"]
+        VIEWER["modules/native_viewer.py (LatestFrameNativeViewer Win32 50 FPS)"]
+        WIN["Ventana Flotante de Escritorio (cv2.imshow)"]
     end
 
-    subgraph Logica ["4. Lógica y Persistencia"]
+    subgraph Logica ["4. Persistencia Asíncrona SQLite WAL"]
+        A_WRITER["modules/audit_writer.py (AuditEventWriter - Cola Asíncrona)"]
         METRICS["modules/metrics.py (Cálculos ROI & Sesión)"]
-        DB[(data/vigilante_epp.db)]
+        DB[(data/vigilante_epp.db - Modo WAL + UPDATE Atómico)]
         CAPS[("captures/ (Evidencias JPG)")]
     end
 
-    subgraph Presentacion ["5. UI & Salidas"]
-        UI["app.py (Streamlit Dashboard)"]
+    subgraph Presentacion ["5. Vistas Desacopladas y Dashboard"]
+        APP["app.py (Orquestador Declarativo < 200 líneas)"]
+        VIEWS["modules/views/ (demo, live, stats, reports, config, components)"]
         CHARTS["modules/charts.py (SPC & Plotly)"]
-        REP["modules/report_generator.py (HTML Report)"]
-        STYLES["styles/styles.py (CSS Cockpit)"]
+        REP["modules/report_generator.py (HTML Report Preliminar/Cerrado)"]
+        STYLES["styles/styles.py (CSS Semántico & Cockpit)"]
     end
 
-    CAM --> STREAM
-    STREAM --> YOLO
-    IMG --> YOLO
+    CAM --> SOURCES
+    SOURCES --> STREAM
+    STREAM --> CORE_AUDITOR
+    CORE_AUDITOR --> AUDITOR
+    CORE_AUDITOR --> DEMO_VIDEO
+    AUDITOR --> YOLO
+    DEMO_VIDEO -->|Inferencia y Tracking MOT en RAM| YOLO
     YOLO --> TRACK
     TRACK --> SPATIAL
-    SPATIAL --> METRICS
-    METRICS --> DB
-    SPATIAL -.->|Infracción Crítica| CAPS
-    DB --> UI
-    METRICS --> UI
+    SPATIAL --> CORE_AUDITOR
+    CORE_AUDITOR -.-> VIEWER
+    VIEWER -->|Repintado Continuo 50 FPS| WIN
+    AUDITOR -->|Hook Asíncrono| A_WRITER
+    A_WRITER -->|Transacciones Atómicas| DB
+    A_WRITER -.->|Infracción Crítica| CAPS
+    IMG --> DEMO_VIDEO
+    APP --> VIEWS
+    VIEWS -->|get_latest_state O(1)| AUDITOR
+    VIEWS -->|get_state O(1)| DEMO_VIDEO
+    DB --> VIEWS
+    METRICS --> VIEWS
     METRICS --> CHARTS
-    CHARTS --> UI
-    METRICS --> REP
-    STYLES --> UI
+    CHARTS --> VIEWS
+    DB --> REP
+    STYLES --> APP
+    STYLES --> VIEWS
 ```
 
 ---
@@ -86,20 +108,24 @@ flowchart TD
 
 ```
 PROYECTO EPP/
-├── app.py                      # Punto de entrada principal (Streamlit UI, navegación en sidebar y modal de configuración)
+├── app.py                      # Orquestador declarativo (< 200 líneas): routing, sesión y sidebar
 ├── requirements.txt            # Dependencias del entorno (Streamlit, YOLOv8, OpenCV, Plotly, etc.)
 ├── README.md                   # Documentación general para usuarios y presentación
 ├── PROJECT_MAP.md              # [ESTE ARCHIVO] Mapa de arquitectura e indexación rápida
+├── PLAN.md                     # Plan de optimización modular y registro de fases operativas
 ├── LICENSE                     # Licencia de código abierto MIT
 ├── .gitignore                  # Exclusiones de Git (BD local, capturas, entornos, temporales)
 ├── .gitattributes              # Normalización de saltos de línea (CRLF para .bat)
 ├── .streamlit/
 │   └── config.toml             # Configuración visual de Streamlit (paleta, layout y tipografía)
 ├── assets/
-│   └── logo.jpg                # Logo institucional para reportes y cabecera
+│   ├── logo.jpg                # Logo institucional para reportes y cabecera (fallback)
+│   ├── logo.svg                # Logo vectorial institucional principal
+│   └── *.svg                   # Catálogo local de iconos vectoriales SVG (navegación, estado y archivos)
 ├── docs/
 │   ├── DESIGN.md               # Especificación completa del sistema de diseño industrial
-│   └── proyecto_base.md        # Especificación técnica base y guía de pitch de feria
+│   ├── proyecto_base.md        # Especificación técnica base y guía de pitch de feria
+│   └── PLAN_RENDIMIENTO_VISORES.md # Bitácora técnica y registro de arquitectura
 ├── models/
 │   └── ppe_model.pt            # Pesos del modelo YOLOv8 entrenado para EPP (~6.2 MB)
 ├── data/                       # [Excluido en Git - Autogenerado]
@@ -115,79 +141,81 @@ PROYECTO EPP/
 │   └── 5_actualizar.bat        # Git pull sincronizado (Windows)
 ├── styles/                     # Capa de diseño y presentación
 │   ├── __init__.py
-│   └── styles.py               # Inyección CSS personalizada, header, status cards e incident cards
-└── modules/                    # Lógica modular de backend desacoplada
-    ├── __init__.py
-    ├── camera.py               # Captura multihilo desacoplada, buffer O(1) y gestión singleton de hardware
-    ├── detector.py             # Inferencia YOLOv8, lógica espacial, filtrado de clases y semaforización
-    ├── tracker_manager.py      # Tracking persistente ByteTrack, anti-parpadeo y cooldown de alertas
-    ├── database.py             # Capa relacional SQLite (sesiones maestras, eventos e índices B-Tree)
-    ├── metrics.py              # Gestión de sesión Streamlit, analítica de KPIs y cálculo de ROI
-    ├── charts.py               # Gráficos de Control Estadístico de Procesos (SPC) y severidad con Plotly
-    ├── report_generator.py     # Generación de informes periciales HTML con imágenes Base64 / exportables a PDF
-    └── samples.py              # Generador de escenarios fotográficos sintéticos para demostración
+│   ├── icons.py                # Gestor de iconos vectoriales SVG con soporte para tamaño, trazo y color dinámico
+│   └── styles.py               # Inyección CSS personalizada, clases utilitarias, header y status cards
+├── modules/                    # Lógica modular de backend desacoplada
+│   ├── __init__.py
+│   ├── audit_writer.py         # Persistencia asíncrona desacoplada en segundo plano para SQLite y disco
+│   ├── auditor_core.py         # Núcleo base común de inferencia (BaseAuditorService) y renderizado BGR
+│   ├── auditor.py              # Servicio de auditoría en vivo (LiveAuditorService) conectado a SQLite
+│   ├── camera.py               # Captura multihilo desacoplada, buffer O(1) y gestión singleton de hardware
+│   ├── camera_sources.py       # Centralización de fuentes de video y exclusión mutua de hardware (CAMERA_MODE_LOCK)
+│   ├── charts.py               # Gráficos de Control Estadístico de Procesos (SPC) y severidad con Plotly
+│   ├── database.py             # Capa SQLite WAL optimizada con incrementos atómicos y consultas agregadas
+│   ├── demo_video.py           # Servicio de demostración en memoria: video y fotos, cero persistencia en BD
+│   ├── detector.py             # Inferencia YOLOv8 BGR nativo, lógica espacial y semaforización
+│   ├── metrics.py              # Inicialización de estado y cálculo interactivo de ROI
+│   ├── native_viewer.py        # Visor OpenCV con hilo Win32 dedicado, sincronización O(1) y 50 FPS
+│   ├── report_generator.py     # Informes periciales HTML (dictamen preliminar/cerrado) exportables a PDF
+│   ├── samples.py              # Generador de escenarios fotográficos sintéticos para demostración
+│   ├── tracker_manager.py      # Tracking persistente ByteTrack, anti-parpadeo y cooldown de alertas
+│   └── views/                  # Vistas modulares y componentes de interfaz Streamlit
+│       ├── __init__.py         # Exportaciones de vistas
+│       ├── components.py       # Plantillas RTSP, escaneo de dispositivos y tarjetas HUD
+│       ├── config_dialog.py    # Diálogo modal emergente (@st.dialog)
+│       ├── demo_view.py        # Vista de demostración y sandbox interactivo
+│       ├── live_view.py        # Vista de análisis y supervisión en vivo
+│       ├── stats_view.py       # Vista de estadísticas gerenciales, gráficos SPC y calculadora ROI
+│       └── reports_view.py     # Vista de dictamen pericial, bitácora forense y exportación
+└── tests/                      # Suite de pruebas automatizadas (39 pruebas unitarias al 100% OK)
+    ├── test_app_navigation.py  # Navegación, vistas desacopladas y estado reactivo de Streamlit
+    ├── test_audit_writer.py    # Persistencia asíncrona y transaccional
+    ├── test_auditor_first_frame.py # Entrega inmediata de previsualización y ciclo de vida de ventana nativa
+    ├── test_camera_frame_sequence.py # Secuencialidad y consistencia de captura
+    ├── test_camera_sources.py  # Detección dinámica de cámaras, normalización IP y presets
+    └── test_demo_video.py      # Modo demostración, cero persistencia y visualización
 ```
-
-> **Nota para Git/GitHub:** Las carpetas `data/` y `captures/` están deliberadamente ignoradas en `.gitignore`. Al clonar el repositorio, la aplicación las creará automáticamente en la primera ejecución sin comprometer datos confidenciales.
 
 ---
 
 ### Índice Rápido de Símbolos
 
-#### [`modules/camera.py`](file:///modules/camera.py) — Captura Multihilo & Hardware de Video
-* `ThreadedCamera`: Hilo demonio de captura en segundo plano con DirectShow en Windows, blindaje contra excepciones C++ en `set()` y tolerancia a caídas transitorias de fotogramas.
-* `CameraStreamManager`: Gestor centralizado singleton de streams de video para evitar colisiones al conmutar dispositivos o interactuar con controles de UI.
-* `get_camera_manager()`: Proveedor con `@st.cache_resource` para persistencia del flujo a través de los re-runs reactivos de Streamlit.
+#### [`modules/auditor_core.py`](file:///modules/auditor_core.py) — Núcleo Común de Inferencia
+* `BaseAuditorService`: Clase abstracta que unifica el ciclo de vida del hilo demonio, captura y pacing de FPS, entrega inmediata del primer cuadro preview, inferencia y tracking espacial en BGR nativo, y hook abstracto `_on_worker_event_confirmed(event_payload)`.
+* `annotate_auditor_frame(frame_bgr, workers_data, status, title, message, ...)`: Función pura desacoplada para renderizado gráfico BGR de recuadros de operarios, etiquetas y banner HUD superior.
 
-#### [`modules/detector.py`](file:///modules/detector.py) — Inferencia y Visión Artificial
-* `load_detector_model()`: Carga el modelo YOLOv8 (`models/ppe_model.pt` o fallback `yolov8n.pt`) con `@st.cache_resource`.
-* `detect_objects(image_bgr, model, conf_threshold, filter_masks, check_helmet, check_vest, use_tracking)`: Inferencia base sobre el fotograma con filtrado paramétrico de clases y soporte para ByteTrack.
-* `analyze_workers_spatial(detections_list, check_helmet, check_vest)`: Asocia cascos y chalecos con la caja contenedora de cada persona detectada usando intersección geométrica vertical.
-* `evaluate_compliance(detections_list, check_helmet, check_vest)`: Determina el semáforo integral de seguridad (`safe`, `warning`, `danger`, `standby`).
+#### [`modules/auditor.py`](file:///modules/auditor.py) — Servicio de Auditoría en Vivo
+* `LiveAuditorService`: Especialización de `BaseAuditorService` que implementa `_on_worker_event_confirmed` enviando eventos a `AuditEventWriter` para persistencia transaccional en SQLite y almacenamiento de evidencias fotográficas en disco.
+* `get_live_auditor()`: Proveedor singleton con `@st.cache_resource`.
 
-#### [`modules/tracker_manager.py`](file:///modules/tracker_manager.py) — Multi-Object Tracking & Cooldown
-* `WorkerTrackManager`: Gestiona el ciclo de vida y deduplicación de auditorías por cada operario rastreado (MOT).
-  * `evaluate_worker_event(worker_dict)`: Aplica filtro de 2 fotogramas consecutivos anti-parpadeo y cooldown individual por ID para evitar inundación de eventos en SQLite.
-  * `reset()`: Limpia la memoria de tracking al cambiar de sesión o apagar la cámara.
-  * `purge_inactive_tracks()`: Elimina operarios inactivos tras un umbral de timeout.
+#### [`modules/demo_video.py`](file:///modules/demo_video.py) — Sandbox de Demostración
+* `DemoVideoService`: Especialización de `BaseAuditorService` que implementa `_on_worker_event_confirmed` registrando eventos en una cola circular en RAM (`collections.deque(maxlen=6)`), con cero persistencia en disco o base de datos.
+* `display_static_image(...)`: Procesa e inyecta imágenes estáticas o sintéticas directamente en la ventana de escritorio.
+* `get_demo_video_service()`: Proveedor singleton con `@st.cache_resource`.
 
-#### [`modules/database.py`](file:///modules/database.py) — Capa SQLite Normalizada
-* `get_connection()`: Retorna conexión SQLite configurada con `sqlite3.Row`.
-* `init_db()`: Inicializa tablas relacionales `camera_sessions` y `camera_events` con índices B-Tree y migraciones automáticas.
-* `get_or_create_active_session()` / `create_new_session(session_name)`: Gestión del ciclo de vida de sesiones y turnos de trabajo.
-* `start_camera_session()` / `end_camera_session(...)`: Apertura y cierre de turnos de supervisión.
-* `log_camera_event(...)`: Registro transaccional de eventos/infracciones con timestamp, ID de operario y captura JPG asociada.
-* `get_compliance_stats(session_id)`: Agregación de KPIs de cumplimiento de la sesión activa o histórico global.
-* `get_recent_incidents(session_id, limit)`: Lista de incidentes críticos recientes.
-* `get_history_dataframe(session_id)` / `get_detailed_events_dataframe(session_id)`: Consultas optimizadas devueltas como `pd.DataFrame`.
-* `get_hourly_risk_distribution(session_id)`: Agregación horaria de infracciones para gráficos SPC.
-* `get_all_sessions_list()`: Listado de turnos históricos registrados.
-* `clear_all_data()`: Purga completa de datos para mantenimiento.
+#### [`modules/detector.py`](file:///modules/detector.py) — Inferencia y Visión Artificial BGR
+* `detect_objects(..., return_rgb=False)`: Pipeline BGR nativo zero-copy que evita la sobrecarga de conversiones de color intermedias.
+* `analyze_workers_spatial(...)`: Asociación espacial geométrica de operarios con cascos y chalecos.
+* `evaluate_compliance(...)`: Semáforo integral de seguridad (`safe`, `warning`, `danger`, `standby`).
+
+#### [`modules/database.py`](file:///modules/database.py) — Persistencia SQLite WAL Optimizada
+* `log_camera_event(...)`: Inserción transaccional atómica que actualiza los contadores de la sesión activa en una sola sentencia SQL, reduciendo drásticamente las operaciones I/O por infracción.
+* `get_compliance_stats(session_id)`: Agregación condicional única mediante `SUM(CASE ...)` en una sola consulta SQL.
 
 #### [`modules/metrics.py`](file:///modules/metrics.py) — Estado de Sesión y Analítica
 * `init_session_state()` / `reset_session_state()`: Inicialización y reinicio del estado reactivo de Streamlit.
-* `record_camera_audit(...)` / `record_audit(...)`: Registra auditorías e incidentes interactuando con la base de datos.
 * `calculate_roi(num_workers, avg_fine)`: Estimación de retorno de inversión y ahorro anual frente a sanciones laborales/OSHA.
-* Wrappers analíticos: `get_compliance_stats()`, `get_recent_incidents()`, `get_history_dataframe()`, `get_detailed_events_dataframe()`, `get_hourly_risk_distribution()`, `get_all_sessions_list()`.
 
-#### [`modules/charts.py`](file:///modules/charts.py) — Gráficos Estadísticos con Plotly
-* `create_spc_control_chart(hours_df, is_dark)`: Gráfico de Control Estadístico de Procesos (Shewhart Run Chart) con línea de proceso (CL), límite superior de control (UCL) y puntos críticos coloreados según norma ISO 45001.
-* `create_severity_bar_chart(history_df, is_dark)`: Gráfico de barras horizontales con semaforización cromática real (rojo/naranja/verde) y etiquetas directas legibles.
+#### [`modules/views/`](file:///modules/views/) — Vistas Desacopladas
+* `components.py`: Componentes visuales reutilizables (`render_stream_presets`, `render_device_scanner`, `render_desktop_window_card`).
+* `config_dialog.py`: Diálogo modal `@st.dialog("Configuracion del Sistema")` para parámetros del sistema.
+* `demo_view.py`: `render_demo_view(model, is_dark, cfg)` para sandbox de demostración y pruebas multimedia.
+* `live_view.py`: `render_live_view(model, is_dark, cfg)` para supervisión en vivo y control de cámara.
+* `stats_view.py`: `render_stats_view(is_dark)` para métricas gerenciales, control SPC y ROI.
+* `reports_view.py`: `render_reports_view(is_dark)` para dictamen pericial, bitácora forense y exportación.
 
-#### [`modules/report_generator.py`](file:///modules/report_generator.py) — Generación de Informes Forenses
-* `compute_audit_kpis(detailed_df)`: Calcula métricas agregadas, tasa de cumplimiento e índice de severidad.
-* `image_to_base64(image_path)`: Codifica evidencias JPG en Base64 para incrustación directa en el reporte sin dependencias de red.
-* `generate_html_report(detailed_df, session_name, auditor_name)`: Construye un documento HTML profesional autosuficiente, imprimible a PDF y preparado para auditorías formales.
-
-#### [`modules/samples.py`](file:///modules/samples.py) — Escenarios Sintéticos
-* `generate_demo_sample(sample_type)`: Genera fotogramas sintéticos de demostración con operarios simulados portando o careciendo de EPP para pruebas inmediatas sin cámara física.
-
-#### [`styles/styles.py`](file:///styles/styles.py) — UI, Cabecera y Diseño
-* `get_theme_css(is_dark)`: Generador de estilos CSS adaptables (Dark Cockpit / Clean Light).
-* `apply_styles(theme_mode)`: Inyecta el CSS del tema activo en la sesión de Streamlit.
-* `render_top_header(is_dark)`: Renderiza la barra superior institucional con logo y estado de conexión.
-* `render_status_card(...)`: Renderiza la tarjeta visual del semáforo HUD con badges y micro-animaciones.
-* `render_incident_card(...)`: Renderiza las tarjetas de alerta de incidentes recientes en la barra lateral.
+#### [`app.py`](file:///app.py) — Orquestador Central
+* Orquestador limpio de menos de 200 líneas que gestiona la configuración de página, sincronización de tema, barra lateral con modo riel permanente y enrutador condicional a cada vista modular.
 
 ---
 
@@ -197,7 +225,7 @@ PROYECTO EPP/
 | Columna | Tipo | Descripción |
 |---|---|---|
 | `id` | INTEGER (PK AUTOINCREMENT) | Identificador único del turno/sesión |
-| `session_name` | TEXT NOT NULL | Nombre descriptivo del turno (ej. 'Sesión #1 (06/10/2026)') |
+| `session_name` | TEXT NOT NULL | Nombre descriptivo del turno |
 | `start_time` | DATETIME NOT NULL | Inicio de la supervisión |
 | `end_time` | DATETIME | Cierre de la supervisión |
 | `status` | TEXT DEFAULT 'active' | Estado del turno: `'active'` o `'closed'` |
@@ -219,25 +247,13 @@ PROYECTO EPP/
 | `confidence` | REAL DEFAULT 0.0 | Confianza de la detección IA (%) |
 | `evidence_path` | TEXT | Ruta local a la captura JPG de evidencia |
 
-### Índices B-Tree para Alto Rendimiento
-* `idx_events_session`: Optimiza filtros por sesión activa.
-* `idx_events_worker`: Acelera trazabilidad individual por operario.
-* `idx_events_timestamp`: Acelera agregaciones cronológicas y gráficos SPC.
-* `idx_events_status` & `idx_events_category`: Acelera consultas de Pareto y semaforización.
-* `idx_sessions_status`: Búsqueda inmediata de sesión activa.
-
 ---
 
 ## 6. Checklist de Publicación en GitHub
 
 Antes de ejecutar `scripts/4_publicar_github.bat`, verificar:
 1. **Archivos Sensibles Ignorados:** Verificar que `data/` (`*.db`) y `captures/` (`*.jpg`) no estén en el staged de Git (`git status`).
-2. **Dependencias Completas:** Asegurar que `requirements.txt` incluya `plotly>=5.0.0` para la pestaña de métricas y gráficos SPC.
-3. **Tamaño del Modelo IA:** `models/ppe_model.pt` pesa ~6.25 MB, lo cual está holgadamente dentro del límite de 100 MB de GitHub sin requerir Git LFS.
-4. **Scripts con Permisos / Formato:** Los scripts `.bat` preservan formato CRLF vía `.gitattributes` y `1_instalar_linux.sh` tiene formato LF.
-
----
-
-## 7. Instrucciones para Asistentes y Desarrolladores
-1. **No re-escanear todo el proyecto:** Para responder dudas sobre flujos de datos o ubicar lógica, use las rutas y funciones listadas en este mapa.
-2. **Consultar archivos específicos:** Abra únicamente el archivo en `modules/` relacionado con el cambio solicitado (ej: para alertas o cooldowns `tracker_manager.py`, para base de datos `database.py`, para visualizaciones `charts.py`).
+2. **Dependencias Completas:** Asegurar que `requirements.txt` incluya `plotly>=5.0.0`.
+3. **Tamaño del Modelo IA:** `models/ppe_model.pt` pesa ~6.25 MB (dentro del límite de 100 MB).
+4. **Scripts con Permisos / Formato:** Scripts `.bat` preservan formato CRLF y scripts `.sh` formato LF.
+5. **Cero Emojis:** Prohibición estricta de emojis en todo el repositorio.

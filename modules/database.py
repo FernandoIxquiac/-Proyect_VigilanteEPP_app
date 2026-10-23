@@ -11,11 +11,16 @@ CAPTURES_DIR = "captures"
 os.makedirs(DB_DIR, exist_ok=True)
 os.makedirs(CAPTURES_DIR, exist_ok=True)
 
+
+class EvidencePersistenceError(OSError):
+    """Indica que la evidencia requerida de una infracción no se guardó."""
+
 def get_connection():
-    """Retorna una conexión a la base de datos SQLite con claves foráneas activadas."""
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    """Retorna una conexión a la base de datos SQLite con claves foráneas activadas, modo WAL y timeout ampliado."""
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=10.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
+    conn.execute("PRAGMA journal_mode = WAL;")
     return conn
 
 def init_db():
@@ -118,6 +123,54 @@ def get_or_create_active_session() -> int:
         conn.commit()
         return cursor.lastrowid
 
+def get_active_session_info() -> dict:
+    """
+    Retorna la información del turno actualmente activo en la base de datos.
+    Devuelve None si no existe una sesión activa.
+    """
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, session_name, status, total_events, infractions_count, start_time, end_time
+            FROM camera_sessions
+            WHERE status = 'active'
+            ORDER BY id DESC LIMIT 1
+        """)
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+def close_active_session(session_id: int = None) -> bool:
+    """
+    Cierra formalmente el turno actual sellando la fecha y hora de fin.
+    Si session_id es None, busca y cierra la sesión activa actual.
+    Retorna True si cerró una sesión, False si no había sesión activa.
+    """
+    now = datetime.datetime.now()
+    now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if session_id is None:
+            cursor.execute("SELECT id FROM camera_sessions WHERE status = 'active' ORDER BY id DESC LIMIT 1")
+            row = cursor.fetchone()
+            if not row:
+                return False
+            target_id = row[0]
+        else:
+            target_id = session_id
+
+        cursor.execute("SELECT COUNT(*) FROM camera_events WHERE session_id = ?", (target_id,))
+        t_events = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM camera_events WHERE session_id = ? AND status IN ('danger', 'warning')", (target_id,))
+        t_infr = cursor.fetchone()[0]
+
+        cursor.execute("""
+            UPDATE camera_sessions 
+            SET end_time = ?, status = 'closed', total_events = ?, infractions_count = ?
+            WHERE id = ?
+        """, (now_str, t_events, t_infr, target_id))
+        conn.commit()
+        return True
+
 def create_new_session(session_name: str = None) -> int:
     """
     Cierra la sesión activa actual y crea una nueva sesión limpia.
@@ -196,6 +249,7 @@ def log_camera_event(category: str, details: str, status: str, personnel_count: 
     now = datetime.datetime.now()
     now_str = now.strftime("%Y-%m-%d %H:%M:%S")
     
+    full_path = None
     if frame_bgr is not None and status in ["danger", "warning"]:
         try:
             clean_wid = str(worker_id).replace('#', '').replace('-', '_').replace(' ', '')
@@ -207,22 +261,59 @@ def log_camera_event(category: str, details: str, status: str, personnel_count: 
                 frame_save = cv2.resize(frame_bgr, (1280, int(h * scale)))
             else:
                 frame_save = frame_bgr
-            cv2.imwrite(full_path, frame_save, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            if not cv2.imwrite(full_path, frame_save, [cv2.IMWRITE_JPEG_QUALITY, 80]):
+                raise EvidencePersistenceError(
+                    f"OpenCV no pudo escribir la evidencia: {full_path}"
+                )
             evidence_path = full_path
-        except Exception as e:
-            print(f"[AVISO] No se pudo guardar la evidencia fotográfica: {e}")
-            evidence_path = None
+        except EvidencePersistenceError:
+            if full_path and os.path.isfile(full_path):
+                try:
+                    os.remove(full_path)
+                except OSError:
+                    pass
+            raise
+        except (cv2.error, OSError, ValueError, TypeError, AttributeError) as exc:
+            if full_path and os.path.isfile(full_path):
+                try:
+                    os.remove(full_path)
+                except OSError:
+                    pass
+            raise EvidencePersistenceError(
+                f"No se pudo guardar la evidencia fotográfica: {exc}"
+            ) from exc
 
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO camera_events (session_id, worker_id, timestamp, category, details, status, personnel_count, confidence, evidence_path)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (session_id, worker_id, now_str, category, details, status, personnel_count, confidence, evidence_path))
-        event_id = cursor.lastrowid
-        conn.commit()
-        
-    update_session_counters(session_id)
+    try:
+        with get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO camera_events (session_id, worker_id, timestamp, category, details, status, personnel_count, confidence, evidence_path)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (session_id, worker_id, now_str, category, details, status, personnel_count, confidence, evidence_path))
+            event_id = cursor.lastrowid
+
+            try:
+                cursor.execute("""
+                    UPDATE camera_sessions
+                    SET total_events = total_events + 1,
+                        infractions_count = infractions_count + CASE WHEN ? IN ('danger', 'warning') THEN 1 ELSE 0 END
+                    WHERE id = ?
+                """, (status, session_id))
+            except sqlite3.OperationalError as op_err:
+                if "no such table: camera_sessions" in str(op_err).lower():
+                    pass
+                else:
+                    raise
+
+            conn.commit()
+    except sqlite3.Error:
+        if evidence_path and os.path.isfile(evidence_path):
+            try:
+                os.remove(evidence_path)
+            except OSError:
+                pass
+        raise
+
     return event_id
 
 def get_compliance_stats(session_id: int = None):
@@ -231,30 +322,33 @@ def get_compliance_stats(session_id: int = None):
     Si session_id es None, calcula el consolidado global histórico.
     Retorna (total_auditorias, cumplimiento_pct, tasa_redondeada, total_infracciones)
     """
+    query = """
+        SELECT 
+            COUNT(*),
+            COALESCE(SUM(CASE WHEN status = 'safe' THEN 1 ELSE 0 END), 0),
+            COALESCE(SUM(CASE WHEN status IN ('danger', 'warning') THEN 1 ELSE 0 END), 0)
+        FROM camera_events
+    """
+    params = ()
+    if session_id is not None:
+        query += " WHERE session_id = ?"
+        params = (session_id,)
+
     with get_connection() as conn:
         cursor = conn.cursor()
-        if session_id is not None:
-            cursor.execute("SELECT COUNT(*) FROM camera_events WHERE session_id = ?", (session_id,))
-            total_events = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM camera_events WHERE session_id = ? AND status = 'safe'", (session_id,))
-            ok_events = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM camera_events WHERE session_id = ? AND status IN ('danger', 'warning')", (session_id,))
-            infractions = cursor.fetchone()[0]
-        else:
-            cursor.execute("SELECT COUNT(*) FROM camera_events")
-            total_events = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM camera_events WHERE status = 'safe'")
-            ok_events = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM camera_events WHERE status IN ('danger', 'warning')")
-            infractions = cursor.fetchone()[0]
-            
+        cursor.execute(query, params)
+        row = cursor.fetchone()
+        total_events = row[0] if row and row[0] is not None else 0
+        ok_events = row[1] if row and row[1] is not None else 0
+        infractions = row[2] if row and row[2] is not None else 0
+
     if total_events > 0:
         compliance_rate = round((ok_events / total_events * 100), 1)
         compliance_pct = int(compliance_rate)
     else:
         compliance_rate = 100.0
         compliance_pct = 100
-        
+
     return total_events, compliance_pct, compliance_rate, infractions
 
 def get_recent_incidents(session_id: int = None, limit: int = 5):
@@ -357,7 +451,7 @@ def get_all_sessions_list() -> list:
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, session_name, status, total_events, infractions_count, start_time
+            SELECT id, session_name, status, total_events, infractions_count, start_time, end_time
             FROM camera_sessions
             ORDER BY id DESC
         """)

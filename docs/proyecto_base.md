@@ -27,7 +27,7 @@ Para garantizar que el demo funcione sin fallos, sin requerir servidores externo
 
 ## 3. Estructura de la Aplicación Web (5 Secciones con Sidebar)
 
-La interfaz se organiza en un menú lateral de navegación sobrio y moderno con acceso rápido a las secciones clave:
+La interfaz se organiza en una barra lateral de navegación permanente con modo riel colapsable (72px compacto / 250px expandido), botones minimalistas con iconos vectoriales SVG locales y acceso rápido a las secciones clave:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -35,12 +35,13 @@ La interfaz se organiza en un menú lateral de navegación sobrio y moderno con 
 ├───────────────────┬────────────────────────────────────────────────────┤
 │  Navegación       │  Vista Principal Activa                            │
 │  ──────────       │  ──────────────────────                            │
-│  ◈ Demostración   │  Sandbox: prueba sin almacenar en BD               │
-│  ◉ Análisis Vivo  │  Webcam/RTSP en vivo + Tracking MOT + Semáforo HUD │
-│  ▲ Estadísticas   │  Control Estadístico SPC + KPIs + Calculadora ROI  │
-│  ≡ Reportes       │  Bitácora pericial (ISO/OSHA) + HTML/CSV           │
+│  [■] Demostración │  Sandbox: prueba sin almacenar en BD               │
+│  [■] Análisis Vivo│  Webcam/RTSP en vivo + Tracking MOT + Semáforo HUD │
+│  [■] Estadísticas │  Control Estadístico SPC + KPIs + Calculadora ROI  │
+│  [■] Reportes     │  Bitácora pericial (ISO/OSHA) + HTML/CSV           │
 │  ──────────────── │                                                    │
-│  ⚙ Configuración  │  Modal (@st.dialog): Sensibilidad, Tema y Filtros  │
+│  [⚙] Configuración│  Modal Compacto (@st.dialog) en 2 Columnas         │
+│  [«] Modo Riel    │  Alterna entre riel estrecho (72px) e iconos fijos │
 └───────────────────┴────────────────────────────────────────────────────┘
 ```
 

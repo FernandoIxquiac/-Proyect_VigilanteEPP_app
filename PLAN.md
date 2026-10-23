@@ -1,65 +1,213 @@
-# PLAN DE CORRECCION DE FALLOS VISUALES Y DE ESTADO — VIGILANTE EPP
-
-## Objetivo
-Resolver de forma definitiva los 2 fallos reportados con evidencia visual:
-1. Visibilidad y contraste de fuentes en todas las pantallas (widgets de radio horizontal, captions, alertas st.info, selectbox, labels y botones).
-2. Persistencia y valores predeterminados del menu de configuracion (Modo Oscuro en ON, Casco en ON, Chaleco en ON, Sensibilidad en Media por defecto; guardado permanente en session_state.config que no se borra al cerrar o reabrir el menu).
+# PLAN DE OPTIMIZACIÓN MODULAR — VIGILANTE EPP
+> **Documento Operativo para Agentes de Código (`coder-flash`, Claude, Gemini u otros modelos)**  
+> **Directiva de Seguridad:** Prohibido el uso de emojis en todo el código, interfaz, comentarios y logs. Utilizar glifos sobrios (●, ■, ◈, ◉, ▲, ≡, ⚙).  
+> **Suite de Pruebas Base:** 39 tests unitarios deben mantenerse aprobados al 100% al concluir cada fase (`python -m unittest discover tests`).
 
 ---
 
-## Tarea 1: Correccion de Visibilidad de Fuentes y Contraste CSS (styles/styles.py)
-1. **Radio buttons en horizontal y vertical (Modo de Video, etc.):**
-   - Asegurar que `div[data-testid="stRadio"] label p`, `div[data-testid="stRadio"] label div`, `div[data-testid="stRadio"] label span`, `div[role="radiogroup"] label *` tengan `color: var(--text-primary) !important;` y `font-weight: 500 !important;`.
-   - En el Sidebar: `.stSidebar div[data-testid="stRadio"] label p` y `*` con `color: var(--text-primary) !important; font-weight: 600 !important;`.
-2. **Textos secundarios y st.caption:**
-   - Forzar `div[data-testid="stCaptionContainer"] p`, `div[data-testid="stCaptionContainer"] *`, `.stCaption`, `.stCaption p`, `small` a `color: var(--text-secondary) !important; font-size: 0.82rem !important;`.
-3. **Alertas y Cajas de Informacion (st.info, st.warning, st.error):**
-   - En `div[data-testid="stAlert"]`: fondo `var(--bg-elevated) !important;`, borde `var(--border-strong) !important;` y borde izquierdo `4px solid var(--brand-primary) !important;`.
-   - `div[data-testid="stAlert"] *`, `div[data-testid="stAlert"] p`: `color: var(--text-primary) !important;`.
-   - Icono SVG: `fill: var(--brand-primary) !important;`.
-4. **Selectbox e Inputs:**
-   - `div[data-baseweb="select"] *`, `div[data-baseweb="select"] div`, `div[data-baseweb="select"] span`: `color: var(--text-primary) !important;`.
-   - `label[data-testid="stWidgetLabel"]`, `label[data-testid="stWidgetLabel"] *`, `label[data-testid="stWidgetLabel"] p`: `color: var(--text-primary) !important; font-weight: 600 !important;`.
-5. **Checkboxes y Toggles:**
-   - `div[data-testid="stCheckbox"] label *`, `div[data-testid="stCheckbox"] label p`, `div[data-testid="stToggle"] label *`, `div[data-testid="stToggle"] label p`: `color: var(--text-primary) !important; font-weight: 500 !important;`.
-6. **Sliders:**
-   - `div[data-testid="stSlider"] *`, `div[data-testid="stSlider"] p`, `div[data-testid="stSlider"] span`, `div[data-baseweb="slider"] *`: `color: var(--text-primary) !important;`.
-7. **Botones en Sidebar y Dialogo:**
-   - `.stSidebar .stButton > button`: fondo `var(--bg-card) !important;`, color `var(--text-primary) !important;`, borde `1px solid var(--border-strong) !important;`.
-   - `.stSidebar .stButton > button *`: `color: var(--text-primary) !important;`.
-   - Hover: fondo `var(--brand-primary-soft) !important;`, color `var(--brand-primary) !important;`.
-8. **Iconos de Tooltips (?):**
-   - `div[data-testid="stTooltipIcon"] svg`, `div[data-testid="stTooltipIcon"] *`: `fill: var(--text-secondary) !important; color: var(--text-secondary) !important;`.
+## Protocolo Obligatorio de Ejecución Inter-Fases
+
+Cualquier agente (incluyendo `coder-flash` o modelos de respaldo) que ejecute este plan **DEBE SEGUIR ESTRICTAMENTE ESTE PROTOCOLO**:
+
+1. **Una sola fase por iteración:** El agente tiene terminantemente prohibido implementar más de una fase a la vez.
+2. **Petición de Autorización Previa:** Antes de tocar o editar cualquier archivo de una fase, el agente debe solicitar autorización explícita al usuario indicando:
+   - Número y nombre de la fase a iniciar.
+   - Archivos que serán modificados o creados.
+   - Riesgos mitigados y objetivo exacto.
+3. **Pausa para Revisión del Usuario:** Al terminar la fase y verificar que los tests pasen, el agente **debe detenerse de inmediato** y devolver el control al usuario para que este pruebe manualmente la aplicación Streamlit y la ventana nativa de OpenCV.
+4. **Actualización de Estado:** El agente debe marcar con `[x]` las tareas completadas en este archivo antes de pasar el turno al usuario.
 
 ---
 
-## Tarea 2: Persistencia y Valores Predeterminados Blindados (app.py)
-1. **Estructura maestra persistente:**
-   - Crear `st.session_state.config`:
-     ```python
-     if "config" not in st.session_state:
-         st.session_state.config = {
-             "is_dark": True,
-             "check_helmet": True,
-             "check_vest": True,
-             "sensitivity_mode": "Media",
-             "conf_threshold_pct": 45
-         }
-     ```
-   - Sincronizar hacia claves compatibles en `st.session_state`: `is_dark`, `check_helmet`, `check_vest`, `conf_threshold_pct`.
-2. **Modal de Configuracion config_dialog():**
-   - Leer siempre de `st.session_state.config`.
-   - Widgets con claves dedicadas `dlg_is_dark`, `dlg_helmet`, `dlg_vest`, `dlg_sensitivity` y `value=cfg[...]`.
-   - Callbacks reactivos que actualizan inmediatamente `st.session_state.config[...]` y ejecutan `st.rerun()`.
-   - Así, al abrir por primera vez:
-     - Modo Oscuro: ON (True)
-     - Casco: Marcado (True)
-     - Chaleco: Marcado (True)
-     - Sensibilidad: Media (45%)
-   - Y al cambiar cualquiera de ellos, se guarda permanentemente y al volver a abrir el diálogo SIEMPRE se conservan los valores elegidos por el usuario.
+## Estado Global de Avance
+
+- [x] **Fase 1:** Optimización de Persistencia SQLite y Eliminación de Wrappers Fantasma
+- [x] **Fase 2:** Optimización del Pipeline Gráfico (Zero-Copy BGR Nativo)
+- [x] **Fase 3:** Unificación del Núcleo de Inferencia (`AuditorEngine`)
+- [x] **Fase 4:** Desacoplamiento y Modularización de Vistas UI (`app.py` a `modules/views/`)
+- [x] **Fase 5:** Higiene de Código Anti-Slop y Consolidación de Estilos CSS
 
 ---
 
-## Verificacion
-- Compilar con `python -m py_compile app.py styles/styles.py`.
-- Verificar que no queden errores de sintaxis y que las variables sean leidas correctamente.
+## Fase 1: Optimización de Persistencia SQLite y Eliminación de Wrappers Fantasma
+
+### Objetivo
+Eliminar la sobrecarga de consultas redundantes en SQLite por cada evento de auditoría y suprimir la capa de wrappers vacíos en `modules/metrics.py`.
+
+### Diagnóstico de Cuellos de Botella
+1. En [modules/database.py](file:///modules/database.py), la función `log_camera_event` invoca `update_session_counters(session_id)` en cada inserción, lo que dispara 2 consultas `COUNT(*)` sobre toda la tabla y un `UPDATE` en `camera_sessions`. Esto cuadruplica el I/O en cada infracción.
+2. `get_compliance_stats` ejecuta 3 consultas `COUNT(*)` independientes cuando una única agregación condicional SQL resuelve los 3 valores en un solo escaneo de índice.
+3. En [modules/metrics.py](file:///modules/metrics.py), 8 funciones son simples pasarelas de una línea hacia `modules/database.py` sin aportar lógica.
+
+### Tareas Quirúrgicas
+- [x] **1.1. Inserción e Incremento Atómico en `modules/database.py`:**
+  - En `log_camera_event`, reemplazar la llamada a `update_session_counters` por una sentencia `UPDATE` atómica directa sobre la sesión activa dentro de la misma transacción:
+    ```sql
+    UPDATE camera_sessions
+    SET total_events = total_events + 1,
+        infractions_count = infractions_count + CASE WHEN ? IN ('danger', 'warning') THEN 1 ELSE 0 END
+    WHERE id = ?;
+    ```
+  - Mantener `update_session_counters` únicamente como utilidad de recalibración/reparación para cierre de sesiones o mantenimiento.
+- [x] **1.2. Agregación Condicional en `get_compliance_stats`:**
+  - Reemplazar los 3 `SELECT COUNT(*)` por una única consulta agregada:
+    ```sql
+    SELECT 
+        COUNT(*),
+        COALESCE(SUM(CASE WHEN status = 'safe' THEN 1 ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN status IN ('danger', 'warning') THEN 1 ELSE 0 END), 0)
+    FROM camera_events
+    WHERE session_id = ?; -- (o sin WHERE para histórico global)
+    ```
+- [x] **1.3. Poda de Wrappers en `modules/metrics.py`:**
+  - Eliminar los wrappers redundantes: `db_get_compliance_stats`, `db_get_recent_incidents`, `db_get_history_dataframe`, `db_get_detailed_events_dataframe`, `db_get_hourly_risk_distribution`, `db_get_all_sessions_list`, `db_get_active_session_info`, `db_close_active_session`.
+  - Re-exportar limpiamente o actualizar las importaciones en `app.py` directamente desde `modules.database`.
+  - Preservar en `modules/metrics.py` únicamente: `init_session_state`, `reset_session_state`, `record_camera_audit` y `calculate_roi`.
+
+### Criterios de Aceptación y Anti-Errores
+- Los 39 tests automáticos deben pasar sin errores: `python -m unittest discover tests`.
+- Verificar que `test_audit_writer.py` registre y confirme transacciones sin bloqueos WAL.
+- Ninguna función pública eliminada debe romper llamadas en `app.py`.
+
+---
+
+## Fase 2: Optimización del Pipeline Gráfico (Zero-Copy BGR Nativo)
+
+### Objetivo
+Eliminar el cuello de botella de doble conversión de color (`BGR -> RGB -> BGR`) en cada cuadro procesado a 20–30 FPS.
+
+### Diagnóstico de Cuellos de Botella
+- La inferencia YOLOv8 en [modules/detector.py](file:///modules/detector.py) genera un array BGR (`results[0].plot()`).
+- Inmediatamente se convierte a RGB (`cv2.cvtColor(annotated_bgr, cv2.COLOR_BGR2RGB)`).
+- Luego, en [modules/auditor.py](file:///modules/auditor.py) y [modules/demo_video.py](file:///modules/demo_video.py), se dibujan etiquetas y se vuelve a convertir a BGR (`cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)`) para enviarlo a la ventana nativa de escritorio `LatestFrameNativeViewer`.
+- Dado que el navegador web ya no renderiza video continuo vía WebRTC/MJPEG, transformar a RGB y regresar a BGR desperdicia ciclos de CPU y ancho de banda de memoria en cada cuadro.
+
+### Tareas Quirúrgicas
+- [x] **2.1. Soporte Nativo BGR en `modules/detector.py`:**
+  - Modificar `detect_objects` añadiendo el parámetro `return_rgb=False` por defecto o adaptarlo para devolver la imagen anotada directamente en BGR (`annotated_bgr`).
+  - Si un consumidor explícito requiere RGB (ej. previsualización estática en Streamlit con `st.image`), convertir solo bajo demanda.
+- [x] **2.2. Anotación Directa en BGR en `modules/auditor.py`:**
+  - Adaptar el bucle de `_audit_loop_impl` para trabajar sobre el fotograma BGR nativo.
+  - Asegurar que los colores OpenCV usados en `cv2.rectangle` y `cv2.putText` correspondan al formato BGR (ej. Verde seguro: `(0, 220, 110)`, Rojo peligro: `(0, 60, 240)`).
+  - Publicar directamente `self._native_viewer.publish(annotated_bgr)` sin llamada a `cv2.cvtColor`.
+- [x] **2.3. Anotación Directa en BGR en `modules/demo_video.py`:**
+  - Actualizar `_annotate_demo_frame` y `display_static_image` para recibir y dibujar directamente en búfer BGR.
+  - Enviar directamente a `self._viewer.publish(annotated_bgr)`.
+
+### Criterios de Aceptación y Anti-Errores
+- Los 39 tests automáticos deben pasar sin errores: `python -m unittest discover tests`.
+- Verificar en `test_auditor_first_frame.py` y `test_demo_video.py` que la secuencia de cuadros y entrega $O(1)$ sea íntegra.
+- Los colores en la ventana flotante nativa deben mantenerse fidedignos (verde para operarios conformes, rojo para infracciones, azul para el HUD superior).
+
+---
+
+## Fase 3: Unificación del Núcleo de Inferencia (`AuditorEngine`)
+
+### Objetivo
+Erradicar la duplicación de ~400 líneas de código idéntico entre [modules/auditor.py](file:///modules/auditor.py) y [modules/demo_video.py](file:///modules/demo_video.py).
+
+### Diagnóstico de Cuellos de Botella
+- Ambos servicios implementan bucles idénticos de lectura de cámara, llamada a detector, tracking espacial, anotación de recuadros, control de cadencia FPS y control de `LatestFrameNativeViewer`.
+- La única discrepancia es que `LiveAuditorService` envía eventos a `AuditEventWriter` (SQLite + disco) con `session_id`, mientras `DemoVideoService` almacena eventos en memoria (`collections.deque(maxlen=6)`).
+
+### Tareas Quirúrgicas
+- [x] **3.1. Creación de `modules/auditor_core.py`:**
+  - Extraer la clase base común `BaseAuditorService` con:
+    - Gestión de hilo demonio (`start`, `stop`, `is_running`, `is_busy`).
+    - Pacing de FPS y medición de latencia.
+    - Anotación de cajas delimitadoras y banner HUD unificado.
+    - Interfaz abstracta o hook de evento: `_on_worker_event_confirmed(event_payload)`.
+    - Comunicación thread-safe con `LatestFrameNativeViewer`.
+- [x] **3.2. Refactorización de `LiveAuditorService`:**
+  - Heredar de `BaseAuditorService` e implementar `_on_worker_event_confirmed` conectándolo a `AuditEventWriter` y base de datos SQLite.
+  - Mantener exactamente las mismas firmas públicas (`start`, `stop`, `update_config`, `get_latest_state`, etc.) para no romper dependencias en la UI ni en los tests.
+- [x] **3.3. Refactorización de `DemoVideoService`:**
+  - Heredar de `BaseAuditorService` e implementar `_on_worker_event_confirmed` registrando el evento en `collections.deque(maxlen=6)`.
+  - Preservar métodos auxiliares propios de sandbox como `display_static_image`.
+
+### Criterios de Aceptación y Anti-Errores
+- Los 39 tests automáticos deben pasar sin errores: `python -m unittest discover tests`.
+- Preservar las firmas de los singletons `@st.cache_resource`: `get_live_auditor()` y `get_demo_video_service()`.
+- Garantizar que la exclusión mutua `CAMERA_MODE_LOCK` siga funcionando sin deadlocks al alternar entre Demostración y En Vivo.
+
+---
+
+## Fase 4: Desacoplamiento y Modularización de Vistas UI (`app.py`)
+
+### Objetivo
+Reducir el archivo monolítico [app.py](file:///app.py) de 1,154 líneas a un orquestador limpio y declarativo de menos de 200 líneas.
+
+### Diagnóstico de Cuellos de Botella
+- `app.py` contiene lógica de renderizado masiva, diálogos modales, selectores de fuentes duplicados, llamadas SQL directas y fragmentos reactivos repetidos.
+- Cualquier fallo de sintaxis en una sección afecta a toda la aplicación Streamlit.
+
+### Tareas Quirúrgicas
+- [x] **4.1. Crear directorio `modules/views/` con submódulos independientes:**
+  - `modules/views/__init__.py`.
+  - `modules/views/components.py`: Componentes visuales reutilizables:
+    - Control de encendido/apagado y selector de dispositivo de cámara.
+    - Plantillas de conexión rápida RTSP/IP.
+    - Fragmentos reactivos de tarjetas de estado y bloque de 3 métricas.
+  - `modules/views/demo_view.py`: Función `render_demo_view(model, is_dark, cfg)` conteniendo la lógica de demostración, archivos subidos y sintéticos.
+  - `modules/views/live_view.py`: Función `render_live_view(model, is_dark, cfg)` conteniendo el análisis en vivo y supervisión de planta.
+  - `modules/views/stats_view.py`: Función `render_stats_view(is_dark)` con selectores de turno, gráficos SPC y calculadora de ROI.
+  - `modules/views/reports_view.py`: Función `render_reports_view(is_dark)` con diagnósticos periciales, bitácora forense, galería de capturas y exportación de informes HTML/CSV.
+  - `modules/views/config_dialog.py`: Modal emergente `@st.dialog("Configuracion del Sistema")`.
+- [x] **4.2. Adelgazamiento de `app.py`:**
+  - Mantener en `app.py` únicamente:
+    - Configuración de página (`st.set_page_config`).
+    - Inicialización de `session_state` y sincronización de tema.
+    - Carga del modelo IA (`load_detector_model`).
+    - Barra lateral (`st.sidebar`) y enrutador condicional:
+      ```python
+      if "Demostracion" in page:
+          render_demo_view(model, is_dark, cfg)
+      elif "Analisis en Vivo" in page:
+          render_live_view(model, is_dark, cfg)
+      elif "Estadisticas" in page:
+          render_stats_view(is_dark)
+      elif "Reportes" in page:
+          render_reports_view(is_dark)
+      ```
+
+### Criterios de Aceptación y Anti-Errores
+- Los 39 tests automáticos deben pasar sin errores: `python -m unittest discover tests`.
+- Comprobar que `tests/test_app_navigation.py` pase al 100%.
+- Verificar que el cambio de tema (Oscuro/Claro) y el modo riel (72px/250px) sigan funcionando de forma reactiva sin parpadeos.
+
+---
+
+## Fase 5: Higiene de Código Anti-Slop y Consolidación de Estilos CSS
+
+### Objetivo
+Eliminar estilos en línea desordenados, retirar comentarios decorativos generados por IA y cumplir estrictamente las directrices de `antislop-code` y `antislop-ui`.
+
+### Diagnóstico de Cuellos de Botella
+- Cientos de etiquetas `<div style="...">` con valores hardcodeados dispersas en el código de vistas.
+- Banners decorativos con caracteres repetidos (`# -----------------`, `# =====================`) en cabeceras de funciones.
+
+### Tareas Quirúrgicas
+- [x] **5.1. Clases Utilitarias en `styles/styles.py`:**
+  - Reemplazar estilos en línea por clases CSS semánticas vinculadas a variables de tema (`.hud-card`, `.section-header`, `.badge-indicator`, `.kpi-subtext`).
+- [x] **5.2. Limpieza de Comentarios (`antislop-code`):**
+  - Retirar banners de caracteres repetidos (`===`, `---`).
+  - Eliminar comentarios que solo repiten la línea de código siguiente (ej. `# Selector de sesión` encima de `st.selectbox`).
+  - Preservar exclusivamente comentarios de restricciones de concurrencia, seguridad o justificaciones técnicas no evidentes.
+- [x] **5.3. Auditoría Final de Reglas:**
+  - Verificar CERO emojis en todo el repositorio.
+  - Verificar que el archivo `PROJECT_MAP.md` quede actualizado reflejando la nueva estructura modular de `modules/views/` y `modules/auditor_core.py`.
+
+### Criterios de Aceptación y Anti-Errores
+- Ejecutar la suite completa: `python -m unittest discover tests`.
+- Compilación sintáctica global: `python -m py_compile app.py modules/*.py modules/views/*.py styles/*.py`.
+- Verificación manual en navegador de la fluidez global de la aplicación.
+
+---
+
+## Instrucciones de Inicio para el Agente Operador (`coder-flash` / Modelo Activo)
+
+Cuando estés listo para trabajar:
+1. Lee este archivo completo y revisa el estado de las casillas `[ ]`.
+2. Identifica la **primera fase pendiente** (ej. Fase 1).
+3. **DETENTE**: No escribas código todavía. Presenta al usuario un mensaje breve y técnico solicitando su autorización explícita para comenzar esa fase específica.
+4. Una vez que el usuario responda autorizando la fase, procede con la implementación quirúrgica, ejecuta los tests y devuélvele el control para su revisión.
