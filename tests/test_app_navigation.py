@@ -147,11 +147,17 @@ class AppNavigationTests(unittest.TestCase):
                     assert app.session_state["current_page"] == expected
                     assert not app.exception
 
+                def _toggle_demo(val=True):
+                    if app.toggle:
+                        app.toggle(key="demo_power_toggle").set_value(val).run()
+                    else:
+                        app.button(key="demo_video_start").click().run()
+
                 app.button(key="nav_btn_demo").click().run()
                 app.selectbox(key="demo_camera_selector").set_value(
                     "Cam-1: Webcam Externa USB (Feria)"
                 ).run()
-                app.button(key="demo_video_start").click().run()
+                _toggle_demo(True)
                 assert demo_video.active
                 assert demo_video.starts[-1]["source"] == 1
                 assert not app.exception
@@ -175,13 +181,19 @@ class AppNavigationTests(unittest.TestCase):
                 app.button(key="nav_btn_live").click().run()
                 assert app.session_state["camera_source_choice"].startswith("Cam-1")
 
-                app.button[0].click().run()
+                def _toggle_camera(val=True):
+                    if app.toggle:
+                        app.toggle(key="camera_power_toggle").set_value(val).run()
+                    else:
+                        app.button[0].click().run()
+
+                _toggle_camera(True)
                 assert auditor.starts[-1]["source"] == 1
                 assert not auditor.active
                 assert app.error
                 assert not app.exception
 
-                app.button[0].click().run()
+                _toggle_camera(True)
                 assert auditor.starts[-1]["source"] == 1
                 assert auditor.starts[-1]["show_native_window"]
                 assert auditor.active
@@ -191,7 +203,7 @@ class AppNavigationTests(unittest.TestCase):
                 assert not app.radio
 
                 app.button(key="nav_btn_demo").click().run()
-                app.button(key="demo_video_start").click().run()
+                _toggle_demo(True)
                 assert not demo_video.active
                 assert app.error
                 assert not app.exception
@@ -202,12 +214,12 @@ class AppNavigationTests(unittest.TestCase):
                 assert not app.exception
 
                 app.button(key="nav_btn_live").click().run()
-                app.button[0].click().run()
+                _toggle_camera(False)
                 assert not auditor.active
                 app.selectbox[0].set_value(
                     "Cam-2: Dispositivo Secundario USB"
                 ).run()
-                app.button[0].click().run()
+                _toggle_camera(True)
                 assert auditor.starts[-1]["source"] == 2
                 assert auditor.starts[-1]["show_native_window"]
                 assert auditor.active

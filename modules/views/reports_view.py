@@ -4,6 +4,7 @@ import os
 import datetime
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 from styles import get_svg_icon
 from modules.database import (
@@ -12,7 +13,7 @@ from modules.database import (
     get_detailed_events_dataframe,
     get_history_dataframe,
 )
-from modules.report_generator import compute_audit_kpis, generate_html_report
+from modules.report_generator import compute_audit_kpis, generate_html_report, generate_pdf_report
 
 
 def render_reports_view(is_dark: bool):
@@ -137,10 +138,10 @@ def render_reports_view(is_dark: bool):
             )
         else:
             card_cols = st.columns(2)
-            bg_card_hex = "#171f33" if is_dark else "#ffffff"
-            text_main = "#f8fafc" if is_dark else "#0f172a"
-            text_sub = "#94a3b8" if is_dark else "#64748b"
-            border_dark = "#424754" if is_dark else "#cbd5e1"
+            bg_card_hex = "var(--bg-card)"
+            text_main = "var(--text-primary)"
+            text_sub = "var(--text-secondary)"
+            border_dark = "var(--border-subtle)"
 
             for idx, (_, row) in enumerate(filtered_df.iterrows()):
                 col = card_cols[idx % 2]
@@ -198,28 +199,44 @@ def render_reports_view(is_dark: bool):
     st.markdown("---")
     st.markdown("#### Exportación Oficial de Informes y Certificados")
 
+    session_display = f"Sesión #{selected_session}" if selected_session else "Histórico Global Consolidado"
+    html_report = generate_html_report(
+        filtered_df,
+        session_name=session_display,
+        auditor_name=auditor_name,
+        is_preliminary=is_active_selected
+    )
+
     col_exp1, col_exp2, col_exp3 = st.columns(3)
     with col_exp1:
-        session_display = f"Sesión #{selected_session}" if selected_session else "Histórico Global Consolidado"
-        html_report = generate_html_report(
-            filtered_df,
-            session_name=session_display,
-            auditor_name=auditor_name,
-            is_preliminary=is_active_selected
-        )
-        html_filename = f"informe_auditoria_epp_{datetime.date.today()}.html"
+        pdf_bytes = generate_pdf_report(html_report)
+        rep_banner_title = "DICTAMEN PRELIMINAR (PDF)" if is_active_selected else "INFORME FORMAL (PDF)"
         pdf_icon = get_svg_icon("file-download", size=15, color="var(--brand-primary)", extra_style="margin-right:6px;")
-        rep_banner_title = "DICTAMEN PRELIMINAR (HTML / PDF)" if is_active_selected else "INFORME FORMAL (HTML / PDF)"
-        rep_btn_label = "Descargar Dictamen Preliminar (PDF)" if is_active_selected else "Descargar Informe Oficial (PDF)"
         st.markdown(f"<div style='display:flex; align-items:center; font-size:0.76rem; font-weight:700; color:var(--text-secondary); margin-bottom:6px;'>{pdf_icon} {rep_banner_title}</div>", unsafe_allow_html=True)
-        st.download_button(
-            label=rep_btn_label,
-            data=html_report.encode("utf-8"),
-            file_name=html_filename,
-            mime="text/html",
-            use_container_width=True,
-            help="Descarga el informe oficial en formato HTML con membrete, listo para guardar en PDF con Ctrl+P"
-        )
+
+        if pdf_bytes is not None:
+            pdf_filename = f"informe_auditoria_epp_{datetime.date.today()}.pdf"
+            rep_btn_label = "Descargar Dictamen (PDF)" if is_active_selected else "Descargar Informe Oficial (PDF)"
+            st.download_button(
+                label=rep_btn_label,
+                data=pdf_bytes,
+                file_name=pdf_filename,
+                mime="application/pdf",
+                use_container_width=True,
+                help="Descarga el informe oficial en formato PDF listo para archivar"
+            )
+        else:
+            html_autoprint = html_report.replace("</body>", "<script>window.print();</script></body>")
+            html_filename = f"informe_auditoria_epp_{datetime.date.today()}.html"
+            rep_btn_label = "Descargar Dictamen (HTML + Print)" if is_active_selected else "Descargar Informe Oficial (HTML + Print)"
+            st.download_button(
+                label=rep_btn_label,
+                data=html_autoprint.encode("utf-8"),
+                file_name=html_filename,
+                mime="text/html",
+                use_container_width=True,
+                help="Abre el archivo en el navegador y presiona Ctrl+P para guardar como PDF"
+            )
     with col_exp2:
         forensic_csv = filtered_df.to_csv(index=False).encode('utf-8')
         csv_name = f"vigilante_epp_sesion_{selected_session}_{datetime.date.today()}.csv" if selected_session else f"vigilante_epp_historico_{datetime.date.today()}.csv"
@@ -244,3 +261,8 @@ def render_reports_view(is_dark: bool):
             mime="text/csv",
             use_container_width=True
         )
+
+    st.markdown("---")
+    with st.expander("Vista previa del informe oficial", expanded=False):
+        st.caption("Previsualizacion del documento que se exporta. El contenido es identico al archivo generado.")
+        components.html(html_report, height=720, scrolling=True)

@@ -472,3 +472,18 @@ def generate_html_report(detailed_df: pd.DataFrame, session_name: str = "Histór
 </html>
 """
     return html
+
+
+def generate_pdf_report(html_content: str):
+    """
+    Convierte el HTML del informe a bytes PDF usando weasyprint.
+    Retorna None si weasyprint no está disponible en el entorno.
+    """
+    try:
+        import weasyprint
+        return weasyprint.HTML(string=html_content).write_pdf()
+    except ImportError:
+        return None
+    except Exception:
+        return None
+

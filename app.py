@@ -26,7 +26,7 @@ init_session_state()
 
 if "config" not in st.session_state:
     st.session_state.config = {
-        "is_dark": True,
+        "is_dark": False,
         "check_helmet": True,
         "check_vest": True,
         "sensitivity_mode": "Media",
@@ -36,7 +36,7 @@ if "config" not in st.session_state:
 for key, val in st.session_state.config.items():
     st.session_state.setdefault(key, val)
 
-get_live_auditor().set_theme(st.session_state.config.get("is_dark", True))
+get_live_auditor().set_theme(st.session_state.config.get("is_dark", False))
 
 if "sidebar_mini" not in st.session_state:
     st.session_state.sidebar_mini = False

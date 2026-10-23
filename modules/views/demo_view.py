@@ -40,24 +40,23 @@ def render_demo_view(model, is_dark: bool, cfg: dict):
 
     with col_pwr:
         st.markdown('<div class="section-header">Control de Demostración</div>', unsafe_allow_html=True)
-        if not is_demo_running:
-            start_demo_requested = st.button(
-                "● Iniciar Demostracion",
-                key="demo_video_start",
-                use_container_width=True,
-                type="primary",
-                help="Inicia la demostración en la ventana flotante de escritorio"
-            )
-            st.markdown('<div class="status-indicator-stopped">○ DEMO DETENIDA</div>', unsafe_allow_html=True)
-        else:
-            stop_demo_requested = st.button(
-                "■ Detener Demostracion",
-                key="demo_video_stop",
-                use_container_width=True,
-                type="primary",
-                help="Detiene la demostración y libera los recursos"
-            )
+
+        demo_toggle = st.toggle(
+            "Demostracion Activa",
+            value=is_demo_running,
+            key="demo_power_toggle",
+            help="Activa o detiene la demostracion en la ventana flotante de escritorio.",
+        )
+
+        if demo_toggle and not is_demo_running:
+            start_demo_requested = True
+        elif not demo_toggle and is_demo_running:
+            stop_demo_requested = True
+
+        if is_demo_running:
             st.markdown('<div class="status-indicator-running">● DEMO EN VIVO</div>', unsafe_allow_html=True)
+        else:
+            st.markdown('<div class="status-indicator-stopped">○ DEMO DETENIDA</div>', unsafe_allow_html=True)
 
     with col_src:
         st.markdown('<div class="section-header">Fuente de Demostración</div>', unsafe_allow_html=True)

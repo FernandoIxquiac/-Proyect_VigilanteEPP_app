@@ -237,6 +237,13 @@ streamlit run app.py
 
 La aplicación abrirá automáticamente en tu navegador en **`http://localhost:8501`**.
 
+### Soporte de Exportación Directa a PDF
+
+El módulo de Reportes soporta exportación directa a documentos PDF mediante la librería `weasyprint>=60.0` (incluida en `requirements.txt`).
+
+- **Degradación automática:** Si las dependencias del sistema no se encuentran disponibles, la aplicación conmuta automáticamente a la descarga del informe en formato HTML con activación automática de impresión (`window.print()`), garantizando la disponibilidad del dictamen sin intervención del usuario.
+- **Dependencias en Windows:** En entornos Windows, WeasyPrint requiere las librerías GTK3 (`libgobject-2.0-0` y asociadas). Para habilitar la generación directa de archivos PDF en este sistema operativo, consulte la documentación oficial de referencia: [Instalación de dependencias GTK para WeasyPrint](https://weasyprint.readthedocs.io/en/stable/first_steps/installation.html).
+
 ---
 
 ## Cómo Funciona
@@ -346,7 +353,7 @@ Suite formal de pruebas automatizadas compuestas por 31 pruebas unitarias (`test
 - [ ] Notificaciones por correo / SMS ante infracciones críticas
 - [ ] Panel web multi-cámara con mapa de planta
 - [ ] API REST para integración con sistemas SCADA/ERP
-- [ ] Exportación de informes en PDF nativo (sin Ctrl+P)
+- [x] Exportación de informes en PDF nativo (con degradación automática a HTML)
 
 ---
 

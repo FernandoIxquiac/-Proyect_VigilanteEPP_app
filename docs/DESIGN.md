@@ -12,10 +12,10 @@
 3. [Sistema de Color (UI, OpenCV, Plotly e Impresión)](#3-sistema-de-color-ui-opencv-plotly-e-impresión)
 4. [Tipografía y Jerarquía Visual](#4-tipografía-y-jerarquía-visual)
 5. [Nuevo Layout y Arquitectura de Interfaz](#5-nuevo-layout-y-arquitectura-de-interfaz)
-6. [Solución Definitiva a Componentes Nativos de Streamlit](#6-solución-definitiva-a-componentes-nativos-de-streamlit)
-7. [Especificación de Componentes UI (`styles/styles.py`)](#7-especificación-de-componentes-ui-stylesstylespy)
-8. [Estándar Visual en Video/IA (`modules/detector.py`)](#8-estándar-visual-en-videoia-modulesdetectorpy)
-9. [Estándar para Gráficos (`modules/charts.py`) e Informes (`report_generator.py`)](#9-estándar-para-gráficos-moduleschartspy-e-informes-report_generatorpy)
+6. [Revisiones y Decisiones de Diseño (Changelog)](#6-revisiones-y-decisiones-de-diseño-changelog)
+7. [Clases Utilitarias CSS y Componentes UI (`styles/styles.py`)](#7-clases-utilitarias-css-y-componentes-ui-stylesstylespy)
+8. [Estándar de Visión Artificial BGR y Núcleo de Inferencia (`modules/auditor_core.py`)](#8-estándar-de-visión-artificial-bgr-y-núcleo-de-inferencia-modulesauditor_corepy)
+9. [Reglas Anti-Slop, Prohibición de Emojis y Código Limpio](#9-reglas-anti-slop-prohibición-de-emojis-y-código-limpio)
 
 ---
 
@@ -186,3 +186,117 @@ El nuevo diseño organiza la pantalla en un **Grid Ejecutivo de Vista Única (Si
 #### 6.8 Tarjeta Pericial Dinámica con Tokens Semánticos
 - **Cambio:** La tarjeta de diagnóstico en la sección de Reportes sustituyó los fondos oscuros fijos por tokens semánticos del sistema (`var(--bg-card)`, `var(--border-subtle)`, `var(--text-primary)`, `var(--text-secondary)`).
 - **Resultado:** Visualización limpia, nítida y con alto contraste tanto en Modo Claro como en Modo Oscuro.
+
+---
+
+### v4.3 — Arquitectura Modular, Pipeline Zero-Copy BGR y Clases Utilitarias (2026-10-22)
+
+#### 6.9 Desacoplamiento de Vistas en `modules/views/`
+- **Cambio:** `app.py` se redujo de 1,154 a 179 líneas (-84%), operando como orquestador declarativo de enrutamiento y sesión.
+- **Estructura Modular:** Las interfaces se dividieron en responsabilidades aisladas:
+  - `components.py`: Componentes de interfaz compartidos (presets de red, selector de dispositivos, cards HUD).
+  - `config_dialog.py`: Modal emergente `@st.dialog` de configuración global.
+  - `demo_view.py`: Sandbox de demostración en memoria para video, imágenes estáticas y sintéticos.
+  - `live_view.py`: Panel de análisis continuo, telemetría y supervisión de planta.
+  - `stats_view.py`: Métricas ejecutivas, gráficos de control SPC y calculadora de ROI.
+  - `reports_view.py`: Dictamen pericial, bitácora forense y exportación oficial en HTML/PDF y CSV.
+
+#### 6.10 Pipeline Gráfico Zero-Copy BGR Nativo
+- **Cambio:** Inferencia con YOLOv8 y renderizado de anotaciones operan directamente en formato BGR nativo (`return_rgb=False`), entregando los fotogramas directamente a `LatestFrameNativeViewer.publish(frame_bgr)` sin conversiones intermedias `cv2.cvtColor`.
+- **Razón:** Erradicar la sobrecarga de CPU y memoria de la doble conversión bidireccional `BGR -> RGB -> BGR` por cuadro a 20-30 FPS.
+
+#### 6.11 Núcleo Común de Inferencia (`modules/auditor_core.py`)
+- **Cambio:** Creación de `BaseAuditorService` y `annotate_auditor_frame`, unificando el ciclo de vida del hilo demonio, pacing de FPS, rotulado de operarios y preview Win32.
+- **Desacoplamiento:** Se eliminaron ~400 líneas duplicadas entre `LiveAuditorService` (persistencia SQLite WAL y almacenamiento en disco) y `DemoVideoService` (almacenamiento en memoria RAM con `deque(maxlen=6)`), conectadas mediante el hook `_on_worker_event_confirmed`.
+
+#### 6.12 Persistencia SQLite WAL con Actualización Atómica y Poda de Wrappers
+- **Cambio:** `log_camera_event` consolida la inserción y el incremento de contadores de sesión en una sola transacción atómica, eliminando dos `COUNT(*)` redundantes por cada infracción.
+- **Agregación Condicional:** `get_compliance_stats` unifica las métricas en un único escaneo de índice con `COALESCE(SUM(CASE ...), 0)`.
+- **Poda de Wrappers:** Eliminación de 8 pasarelas vacías en `modules/metrics.py`, conectando la UI directamente con `modules.database`.
+
+#### 6.13 Eliminación de Estilos Inline en Favor de Clases Utilitarias CSS
+- **Cambio:** Sustitución de etiquetas HTML `<div style="...">` hardcodeadas en vistas por clases utilitarias semánticas integradas en `styles/styles.py`.
+
+---
+
+### v4.4 — Refinamiento Integral de Frontend, Controles de Potencia y Estilización de Widgets (2026-10-23)
+
+#### 6.14 Modo Claro Predeterminado y Sincronización Global
+- **Cambio:** `.streamlit/config.toml` y `app.py` establecen el Modo Claro como base predeterminada del sistema (`base = "light"`, `primaryColor = "#0284C7"`, `is_dark = False`), manteniendo soporte reactivo instantáneo a Modo Oscuro (`#00A8E8`).
+
+#### 6.15 Controles de Potencia Reactivos (`st.toggle`)
+- **Cambio:** Sustitución de los botones de iniciar/detener cámara en `modules/views/live_view.py` y `modules/views/demo_view.py` por interruptores deslizantes `st.toggle` ("Cámara Activa" y "Demostración Activa").
+- **Beneficio:** Reducción de ruido visual, estado binario claro y alineación con los principios de diseño sobrio e industrial.
+
+#### 6.16 Inversión Reactiva de Canvas para Dataframes en Modo Oscuro (`st.dataframe`)
+- **Cambio:** En `styles/styles.py`, aplicación de filtro reactivo `filter: invert(0.92) hue-rotate(180deg) brightness(1.02) contrast(1.05) !important;` exclusivamente sobre el elemento `canvas` del componente `stDataFrame` cuando `is_dark=True`.
+- **Beneficio:** Convierte el fondo blanco nativo del canvas de Glide Data Grid en fondo oscuro integrado con el tema sin alterar los colores de las fuentes ni generar fondos blancos deslumbrantes.
+
+#### 6.17 Tarjetas de Métricas Nativas (`st.metric`) con Alto Contraste
+- **Cambio:** Ampliación de selectores CSS para `stMetric` (`[data-testid="stMetricLabel"]`, `div[data-testid="stMetricValue"]`) para garantizar legibilidad óptima de números KPI en `JetBrains Mono` tabular y etiquetas en mayúsculas semánticas en ambos modos cromáticos.
+
+#### 6.18 Widgets BaseWeb con Paleta Corporativa (`st.toggle` y `st.checkbox`)
+- **Cambio:** Reemplazo de los tonos rojos nativos de Streamlit en interruptores y casillas de verificación. Los switches inactivos muestran fondo `--border-strong`, switches activos y checkboxes marcados muestran `--brand-primary` (`#0284C7` / `#00A8E8`) con checkmark vectorial blanco nítido.
+
+#### 6.19 Deslizadores Globales Unificados en Azul (`hue-rotate(200deg)`)
+- **Cambio:** Unificación cromática de los controles deslizantes (`st.select_slider` en Configuración y `st.slider` en Estadísticas) mediante rotación limpia de matiz `filter: hue-rotate(200deg)` sobre el contenedor `[data-baseweb="slider"]`, sin selectores conflictivos sobre los hijos.
+- **Resultado:** Pista activa, botón circular y texto flotante ("Media", "Alta") convergen en azul corporativo homogéneo, eliminando distorsiones cromáticas y desajustes de color entre pista y selector.
+
+#### 6.20 Amplitud Ejecutiva y Depuración de API en Modal de Configuración
+- **Cambio:** En `modules/views/config_dialog.py`, se expandió el modal a `@st.dialog("Configuracion del Sistema", width="medium")` y se incrementó el margen vertical del encabezado del deslizador (22px).
+- **Depuración:** Se eliminó el parámetro redundante `value=...` en widgets vinculados a `st.session_state` con `key`, erradicando las advertencias de Session State API al abrir el modal.
+
+---
+
+## 7. Clases Utilitarias CSS y Componentes UI (`styles/styles.py`)
+
+Para garantizar coherencia visual, facilidad de mantenimiento y apego estricto a tokens de diseño, se consolidaron clases utilitarias semánticas inyectadas en `get_theme_css()`:
+
+| Clase CSS | Propósito / Elemento | Propiedades Principales |
+| :--- | :--- | :--- |
+| `.section-header` | Encabezados de controles y selectores | `font-size: 0.75rem`, `font-weight: 700`, `text-transform: uppercase`, `letter-spacing: 0.04em`, `color: var(--text-secondary)` |
+| `.preset-hint` | Subtítulo descriptivo de plantillas de conexión | `font-size: 0.72rem`, `color: var(--text-secondary)`, márgenes verticales controlados |
+| `.feed-header` | Rótulo superior para feeds de incidentes en tiempo real | `font-size: 0.75rem`, `font-weight: 700`, `text-transform: uppercase`, `color: var(--brand-primary)` |
+| `.status-indicator-stopped` | Rótulo de cámara detenida | `text-align: center`, `font-size: 0.78rem`, `font-weight: 700`, `color: var(--text-secondary)` |
+| `.status-indicator-running` | Rótulo de cámara en vivo | `text-align: center`, `font-size: 0.78rem`, `font-weight: 700`, `color: #10B981` |
+| `.hud-card` | Contenedor informativo de ventana de escritorio | `background: var(--bg-card)`, `border: 1px solid var(--border-subtle)`, `border-left: 5px solid var(--brand-primary)`, `border-radius: 8px`, `padding: 28px 20px` |
+| `.hud-card-title` | Título de aviso de ventana nativa | `font-size: 1.15rem`, `font-weight: 800`, `color: var(--brand-primary)`, `margin-bottom: 8px` |
+| `.hud-card-desc` | Descripción de ventana nativa | `font-size: 0.88rem`, `color: var(--text-secondary)`, `max-width: 520px`, `line-height: 1.45` |
+| `.layout-spacer` | Separador de flujo visual | `margin-top: 8px`, `margin-bottom: 8px` |
+| `.badge-indicator` | Indicador de estado en bitácoras | `display: inline-flex`, `align-items: center`, `gap: 4px`, `font-size: 0.68rem`, `font-weight: 800`, `padding: 2px 8px`, `border-radius: 4px` |
+| `.kpi-subtext` | Metadatos y subtítulos técnicos | `font-size: 0.80rem`, `color: var(--text-secondary)`, `line-height: 1.3` |
+
+---
+
+## 8. Estándar de Visión Artificial BGR y Núcleo de Inferencia (`modules/auditor_core.py`)
+
+### 8.1 Representación Cromática en Inferencia
+El pipeline de visión opera 100% en el espacio de color **BGR** nativo de OpenCV, evitando conversiones innecesarias:
+
+- **Verde Conforme (`safe`):** `(0, 220, 110)` en BGR.
+- **Rojo Peligro / Infracción (`danger`):** `(0, 60, 240)` en BGR.
+- **Ámbar Advertencia (`warning`):** `(0, 200, 255)` en BGR.
+- **Fondo HUD Superior:** `(42, 23, 15)` en BGR (Azul Marino Abisal).
+
+### 8.2 Anotación Gráfica Unificada (`annotate_auditor_frame`)
+- **Etiquetas de Operario:** Recuadro delimitador con etiqueta superior o inferior auto-ajustable (`#Operario-XX | OK` o `#Operario-XX | INFRACCIÓN`) con tipografía `FONT_HERSHEY_SIMPLEX` a escala `0.45`.
+- **Banner HUD Semafórico:** Banda superior de 36px de alto con estado general de la planta (`REC [MOT TRACKING] | {TITULO}`), grosor de trazo `2` y renderizado antialiasing (`LINE_AA`).
+
+### 8.3 Núcleo `BaseAuditorService`
+- Hilo demonio con control de cadencia FPS monotónico (`max(0.015, 0.045 - elapsed)`).
+- Publicación no bloqueante en $O(1)$ hacia `LatestFrameNativeViewer` en hilo Win32 dedicado (`NativeViewerOwner`) a ~50 FPS.
+- Desacoplamiento de almacenamiento a través del hook abstracto `_on_worker_event_confirmed(event_payload)`.
+
+---
+
+## 9. Reglas Anti-Slop, Prohibición de Emojis y Código Limpio
+
+En cumplimiento de las directrices de ingeniería y anti-slop del proyecto:
+
+1. **Prohibición Total de Emojis:** Queda terminantemente prohibido el uso de emojis en interfaces, botones, etiquetas, código fuente, logs y documentación técnica. Únicamente se permite el uso de texto en español o glifos Unicode industriales sobrios (●, ■, ◈, ◉, ▲, ≡, ⚙).
+2. **Higiene de Comentarios (`antislop-code`):**
+   - Prohibidos los banners decorativos basados en caracteres repetidos (`# ===`, `# ---`, `// ===`).
+   - Prohibidos los comentarios que se limitan a narrar la sintaxis obvia (`# Iniciar variable`, `# Selector de sesión`).
+   - Preservar rigurosamente los comentarios que justifiquen restricciones de concurrencia (`CAMERA_MODE_LOCK`, modo WAL de SQLite, buffers $O(1)$) o requisitos de seguridad laboral.
+3. **Arquitectura Sin Capas Fantasma:** Prohibidos los wrappers o interfaces artificiales de una sola línea que no aporten validación, transformación o valor técnico real.
+4. **Respeto a la Suite de Pruebas:** Cualquier cambio de diseño o refactorización debe garantizar que la totalidad de pruebas automatizadas (39 tests unitarios) apruebe al 100% sin regresiones.

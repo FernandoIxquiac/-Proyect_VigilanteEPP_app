@@ -9,11 +9,11 @@
 
 * **Modo de Operación:** 100% Local / Offline.
 * **Interfaz de Usuario:** Dashboard interactivo en Streamlit organizado mediante barra de navegación lateral permanente con modo riel colapsable (72px compacto / 250px expandido), botones minimalistas (Ghost/Flat) con iconos vectoriales SVG locales y diálogo modal de configuración:
-  1. `Demostración` (icono `device-desktop`): Sandbox interactivo para probar el modelo en fotografías o escenas sintéticas sin almacenar datos en la base de datos.
-  2. `Análisis en Vivo` (icono `video`): Monitoreo en directo por webcam/RTSP con tracking multi-operario (ByteTrack), HUD semafórico y registro automático de infracciones.
-  3. `Estadísticas` (icono `chart-bar`): Panel gerencial con KPIs, gráficos de control estadístico (SPC Shewhart Run Chart), distribución de severidad cromática y calculadora interactiva de ROI.
+  1. `Demostración` (icono `device-desktop`): Sandbox interactivo para probar el modelo en fotografías o escenas sintéticas sin almacenar datos en la base de datos. Activación y detención de demostración vía interruptor reactivo `st.toggle`.
+  2. `Análisis en Vivo` (icono `video`): Monitoreo en directo por webcam/RTSP con tracking multi-operario (ByteTrack), HUD semafórico y registro automático de infracciones. Activación y detención de cámara vía interruptor reactivo `st.toggle`.
+  3. `Estadísticas` (icono `chart-bar`): Panel gerencial con KPIs, gráficos de control estadístico (SPC Shewhart Run Chart), distribución de severidad cromática y calculadora interactiva de ROI con deslizadores corporativos.
   4. `Reportes` (icono `file-text`): Dictamen pericial automatizado (ISO 45001 / OSHA) con tarjeta dinámica sensible al tema, bitácora forense de auditoría y exportación oficial en HTML y CSV.
-  5. `Configuración` (icono `settings`): Modal emergente compacto (@st.dialog) en dos columnas para alternar tema visual, ajustar sensibilidad/umbral (%) y activar/desactivar filtros de EPP sin scroll vertical.
+  5. `Configuración` (icono `settings`): Modal emergente (@st.dialog, `width="medium"`) en dos columnas para alternar tema visual (Modo Claro predeterminado / Modo Oscuro), ajustar sensibilidad con deslizador unificado en azul cian y activar filtros de EPP con casillas corporativas sin scroll ni advertencias de estado.
   6. `Riel Permanente` (icono `chevrons-left`): Control reactivo para alternar entre vista completa y riel estrecho de solo iconos sin ocultar la barra de la pantalla.
 
 ---
@@ -29,7 +29,7 @@
 | **Tracking** | ByteTrack (MOT) | Persistencia de IDs entre frames con filtro anti-parpadeo |
 | **Visualización** | Plotly (≥ 5.0) | Gráficos de Control Estadístico de Procesos (SPC) y barras cromáticas |
 | **Base de Datos** | SQLite (`data/vigilante_epp.db`) | Esquema relacional normalizado con modo WAL e incrementos atómicos |
-| **Estilos** | CSS personalizado (`styles/styles.py`) | Variables de tema Dark/Light, clases utilitarias semánticas y badges |
+| **Estilos** | CSS personalizado (`styles/styles.py`) | Variables semánticas Dark/Light, inversión reactiva de canvas para `st.dataframe`, deslizadores unificados en azul (`hue-rotate 200°`), switches/checkboxes corporativos y clases utilitarias |
 | **Reportes** | HTML5 / CSS auto-contenido | Convertibles a PDF (ISO 45001 / OSHA 1910) y CSV forense |
 
 ---

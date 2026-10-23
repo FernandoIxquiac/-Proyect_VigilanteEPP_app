@@ -14,10 +14,19 @@ SENSITIVITY_MAP = {
 }
 
 
-@st.dialog("Configuracion del Sistema", width="small")
+@st.dialog("Configuracion del Sistema", width="medium")
 def config_dialog(model_info: str = "YOLOv8 (Activo)"):
     """Dialogo modal emergente para ajustar parametros globales del sistema."""
     cfg = st.session_state.config
+
+    if "dlg_is_dark" not in st.session_state:
+        st.session_state["dlg_is_dark"] = cfg["is_dark"]
+    if "dlg_helmet" not in st.session_state:
+        st.session_state["dlg_helmet"] = cfg["check_helmet"]
+    if "dlg_vest" not in st.session_state:
+        st.session_state["dlg_vest"] = cfg["check_vest"]
+    if "dlg_sensitivity" not in st.session_state:
+        st.session_state["dlg_sensitivity"] = cfg.get("sensitivity_mode", "Media")
 
     def _sync_dark():
         new_val = st.session_state.dlg_is_dark
@@ -48,7 +57,6 @@ def config_dialog(model_info: str = "YOLOv8 (Activo)"):
         st.markdown('<div class="section-header">Tema Visual</div>', unsafe_allow_html=True)
         st.toggle(
             "Modo Oscuro",
-            value=cfg["is_dark"],
             key="dlg_is_dark",
             on_change=_sync_dark,
             help="Activa o desactiva el tema oscuro de la interfaz instantaneamente."
@@ -57,21 +65,19 @@ def config_dialog(model_info: str = "YOLOv8 (Activo)"):
         st.markdown('<div class="section-header">Filtros EPP</div>', unsafe_allow_html=True)
         st.checkbox(
             "Casco de Seguridad",
-            value=cfg["check_helmet"],
             key="dlg_helmet",
             on_change=_sync_helmet,
             help="Activa la verificacion obligatoria de uso de casco reglamentario."
         )
         st.checkbox(
             "Chaleco Reflectante",
-            value=cfg["check_vest"],
             key="dlg_vest",
             on_change=_sync_vest,
             help="Activa la verificacion obligatoria de uso de chaleco reflectante."
         )
 
     st.markdown(
-        '<div class="section-header" style="margin-top:14px; margin-bottom:10px;">Sensibilidad del Modelo</div>',
+        '<div class="section-header" style="margin-top:14px; margin-bottom:22px;">Sensibilidad del Modelo</div>',
         unsafe_allow_html=True
     )
     sens_options = ["Minima", "Media", "Alta", "Maxima"]
@@ -82,7 +88,6 @@ def config_dialog(model_info: str = "YOLOv8 (Activo)"):
     st.select_slider(
         "Nivel de sensibilidad:",
         options=sens_options,
-        value=current_mode,
         key="dlg_sensitivity",
         on_change=_sync_sensitivity,
         label_visibility="collapsed",

@@ -65,6 +65,18 @@ def get_theme_css(is_dark: bool = True, is_mini: bool = False) -> str:
         --brand-primary-soft: rgba(0, 168, 232, 0.14);
         --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.28);
         """
+        dataframe_css = """
+    /* Dataframe reactivo para Modo Oscuro */
+    div[data-testid="stDataFrame"] canvas {
+        filter: invert(0.92) hue-rotate(180deg) brightness(1.02) contrast(1.05) !important;
+    }
+    div[data-testid="stDataFrame"],
+    div[data-testid="stDataFrame"] [data-testid="stDataFrameResizable"] {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: var(--radius-md) !important;
+    }
+        """
     else:
         vars_css = """
         --bg-app: #F4F6F9;
@@ -79,6 +91,18 @@ def get_theme_css(is_dark: bool = True, is_mini: bool = False) -> str:
         --brand-primary: #0284C7;
         --brand-primary-soft: rgba(2, 132, 199, 0.10);
         --shadow-card: 0 1px 4px rgba(15, 23, 42, 0.06);
+        """
+        dataframe_css = """
+    /* Dataframe nativo para Modo Claro */
+    div[data-testid="stDataFrame"] canvas {
+        filter: none !important;
+    }
+    div[data-testid="stDataFrame"],
+    div[data-testid="stDataFrame"] [data-testid="stDataFrameResizable"] {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: var(--radius-md) !important;
+    }
         """
 
     return f"""
@@ -184,26 +208,51 @@ def get_theme_css(is_dark: bool = True, is_mini: bool = False) -> str:
         font-weight: 500 !important;
     }}
 
-    /* Borde sobrio de contraste para toggles y checkboxes en modales y temas claros */
-    div[data-testid="stToggle"] div[data-baseweb="toggle"],
-    div[data-testid="stToggle"] span[data-baseweb="toggle"],
-    div[data-testid="stToggle"] [data-baseweb="toggle"] {{
+    /* Reset: exclusivamente los contenedores de texto son transparentes (no toca el span del checkmark) */
+    div[data-testid="stCheckbox"] [data-testid="stMarkdownContainer"],
+    div[data-testid="stCheckbox"] [data-testid="stMarkdownContainer"] * {{
+        background-color: transparent !important;
+        background: transparent !important;
+    }}
+
+    /* Switch (st.toggle BaseWeb): Pista activa e inactiva */
+    div[data-testid="stCheckbox"]:has(input[type="checkbox"]:checked) label[data-baseweb="checkbox"] > div:first-child:not(:has([data-testid="stMarkdownContainer"])) {{
+        background-color: var(--brand-primary) !important;
+    }}
+    div[data-testid="stCheckbox"]:has(input[type="checkbox"]:not(:checked)) label[data-baseweb="checkbox"] > div:first-child:not(:has([data-testid="stMarkdownContainer"])) {{
+        background-color: var(--border-strong) !important;
+    }}
+
+    /* Switch (st.toggle BaseWeb): Esfera deslizante blanca */
+    div[data-testid="stCheckbox"] label[data-baseweb="checkbox"] > div:first-child:not(:has([data-testid="stMarkdownContainer"])) > div {{
+        background-color: #FFFFFF !important;
+    }}
+
+    /* Checkbox estándar (st.checkbox BaseWeb): Casco y Chaleco */
+    div[data-testid="stCheckbox"]:has(input[type="checkbox"]:checked) label[data-baseweb="checkbox"] > span:first-child {{
+        background-color: var(--brand-primary) !important;
+        border-color: var(--brand-primary) !important;
+    }}
+    div[data-testid="stCheckbox"]:has(input[type="checkbox"]:not(:checked)) label[data-baseweb="checkbox"] > span:first-child {{
+        background-color: transparent !important;
         border: 1.5px solid var(--border-strong) !important;
     }}
 
-    /* Sliders Globales */
+    /* Sliders Globales (Sensibilidad en Configuración y ROI en Estadísticas) */
     div[data-testid="stSlider"],
-    div[data-testid="stSlider"] *,
-    div[data-testid="stSlider"] p,
-    div[data-testid="stSlider"] span,
-    div[data-testid="stSlider"] div,
-    div[data-baseweb="slider"],
-    div[data-baseweb="slider"] *,
-    div[data-testid="stSliderTickBar"] * {{
+    div[data-testid="stSlider"] label,
+    div[data-testid="stSlider"] label * {{
         color: var(--text-primary) !important;
+        font-weight: 600 !important;
+    }}
+    /* Rotación de matiz limpia sobre el componente nativo completo (convierte rojo nativo a azul cian uniforme) */
+    div[data-testid="stSlider"] [data-baseweb="slider"] {{
+        filter: hue-rotate(200deg) !important;
     }}
     div[data-testid="stSliderTickBarItem"] {{
         color: var(--text-secondary) !important;
+        font-size: 0.75rem !important;
+        font-weight: 500 !important;
     }}
 
     /* Iconos de Tooltips de Ayuda (?) */
@@ -211,6 +260,7 @@ def get_theme_css(is_dark: bool = True, is_mini: bool = False) -> str:
     div[data-testid="stTooltipIcon"] *,
     [data-testid="stTooltipHoverTarget"] * {{
         fill: var(--text-secondary) !important;
+        stroke: var(--text-secondary) !important;
         color: var(--text-secondary) !important;
     }}
 
@@ -486,12 +536,10 @@ def get_theme_css(is_dark: bool = True, is_mini: bool = False) -> str:
         border-radius: var(--radius-md) !important;
         box-shadow: var(--shadow-card) !important;
     }}
-    div[data-testid="stMetricLabel"],
-    div[data-testid="stMetricLabel"] *,
-    div[data-testid="stMetricLabel"] label,
-    div[data-testid="stMetricLabel"] p,
-    div[data-testid="stMetricLabel"] span,
-    div[data-testid="stMetricLabel"] div {{
+    [data-testid="stMetricLabel"],
+    [data-testid="stMetricLabel"] *,
+    label[data-testid="stMetricLabel"],
+    label[data-testid="stMetricLabel"] * {{
         color: var(--text-secondary) !important;
         font-size: 0.72rem !important;
         font-weight: 700 !important;
@@ -500,7 +548,10 @@ def get_theme_css(is_dark: bool = True, is_mini: bool = False) -> str:
     }}
     div[data-testid="stMetricValue"],
     div[data-testid="stMetricValue"] *,
-    div[data-testid="stMetricValue"] div {{
+    div[data-testid="stMetricValue"] div,
+    div[data-testid="stMetricValue"] p,
+    div[data-testid="stMetricValue"] span,
+    div[data-testid="stMetricValue"] label {{
         color: var(--text-primary) !important;
         font-family: 'JetBrains Mono', monospace !important;
         font-size: 1.35rem !important;
@@ -510,9 +561,14 @@ def get_theme_css(is_dark: bool = True, is_mini: bool = False) -> str:
     div[data-testid="stMetricDelta"],
     div[data-testid="stMetricDelta"] *,
     div[data-testid="stMetricDelta"] div,
-    div[data-testid="stMetricDelta"] span {{
+    div[data-testid="stMetricDelta"] span,
+    div[data-testid="stMetricDelta"] p {{
         font-size: 0.72rem !important;
         font-weight: 600 !important;
+        color: var(--text-secondary) !important;
+    }}
+    div[data-testid="stMetricDelta"] svg {{
+        fill: currentColor !important;
     }}
 
     /* 6. Visor de Cámara e Imágenes */
@@ -686,12 +742,7 @@ def get_theme_css(is_dark: bool = True, is_mini: bool = False) -> str:
     div[data-testid="stExpanderDetails"] * {{
         color: var(--text-primary) !important;
     }}
-    div[data-testid="stDataFrame"] {{
-        background-color: var(--bg-card) !important;
-        border: 1px solid var(--border-subtle) !important;
-        border-radius: var(--radius-md) !important;
-        padding: 4px !important;
-    }}
+{dataframe_css}
 
     /* Vega-Lite Charts (st.bar_chart / st.line_chart) */
     div[data-testid="stArrowVegaLiteChart"] {{
@@ -711,13 +762,13 @@ def get_theme_css(is_dark: bool = True, is_mini: bool = False) -> str:
         stroke: var(--border-strong) !important;
     }}
 
-    /* 15. Modal de Configuracion - Compacto y Dark/Light Theme Completo */
+    /* 15. Modal de Configuracion - Amplitud y Espaciado Ejecutivo */
     div[data-testid="stDialog"] {{
-        padding: 1.2rem 1.5rem !important;
+        padding: 1.4rem 1.8rem !important;
     }}
     div[data-testid="stDialog"] div[data-testid="stVerticalBlock"],
     div[role="dialog"] div[data-testid="stVerticalBlock"] {{
-        gap: 0.45rem !important;
+        gap: 0.75rem !important;
     }}
     div[data-testid="stDialog"] > div,
     div[role="dialog"],
@@ -906,7 +957,7 @@ def apply_styles(theme_mode: bool | str = True, is_mini: bool = False) -> None:
     elif "config" in st.session_state and "is_dark" in st.session_state.config:
         is_dark = st.session_state.config["is_dark"]
     else:
-        is_dark = st.session_state.get("is_dark", True)
+        is_dark = st.session_state.get("is_dark", False)
 
     if not is_mini and "sidebar_mini" in st.session_state:
         is_mini = st.session_state["sidebar_mini"]

@@ -25,23 +25,24 @@ def render_live_view(model, is_dark: bool, cfg: dict):
     col_pwr, col_src = st.columns([1.1, 2.9])
 
     with col_pwr:
-        st.markdown('<div class="section-header">Control de Cámara</div>', unsafe_allow_html=True)
-        if not is_auditing:
-            start_requested = st.button(
-                "● Iniciar Cámara",
-                type="primary",
-                use_container_width=True,
-                help="Enciende la cámara y arranca la auditoría continua"
-            )
-            st.markdown('<div class="status-indicator-stopped">○ CÁMARA DETENIDA</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">Control de Camara</div>', unsafe_allow_html=True)
+
+        camera_toggle = st.toggle(
+            "Camara Activa",
+            value=is_auditing,
+            key="camera_power_toggle",
+            help="Activa o detiene la captura de video y la auditoria en tiempo real.",
+        )
+
+        if camera_toggle and not is_auditing:
+            start_requested = True
+        elif not camera_toggle and is_auditing:
+            stop_requested = True
+
+        if is_auditing:
+            st.markdown('<div class="status-indicator-running">● CAMARA EN VIVO</div>', unsafe_allow_html=True)
         else:
-            stop_requested = st.button(
-                "■ Detener Cámara",
-                type="primary",
-                use_container_width=True,
-                help="Detiene la cámara y libera todos los recursos"
-            )
-            st.markdown('<div class="status-indicator-running">● CÁMARA EN VIVO</div>', unsafe_allow_html=True)
+            st.markdown('<div class="status-indicator-stopped">○ CAMARA DETENIDA</div>', unsafe_allow_html=True)
 
     with col_src:
         st.markdown('<div class="section-header">Dispositivo de Video</div>', unsafe_allow_html=True)

@@ -21,3 +21,4 @@ matplotlib>=3.7.0
 psutil>=5.9.0
 py-cpuinfo>=9.0.0
 lap>=0.4.0
+weasyprint>=60.0
