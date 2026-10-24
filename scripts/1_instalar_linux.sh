@@ -8,7 +8,7 @@
 # =====================================================
 
 echo "[1/3] Instalando PyTorch CPU (version ligera, sin CUDA)..."
-pip install torch==2.2.2+cpu torchvision==0.17.2+cpu --index-url https://download.pytorch.org/whl/cpu
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
 echo "[2/3] Instalando dependencias de la aplicacion..."
 pip install -r requirements.txt

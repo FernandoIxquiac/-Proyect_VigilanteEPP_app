@@ -15,26 +15,31 @@ if not exist "app.py" (
     exit /b 1
 )
 
-REM Verificacion de entorno virtual y ejecutable Streamlit
-if not exist ".venv\Scripts\streamlit.exe" (
-    echo ▲ [AVISO] Entorno virtual o Streamlit no detectado.
-    echo ⚙ Ejecuta primero scripts\1_instalar.bat para aprovisionar las dependencias.
+REM Verificacion de ejecutable Streamlit (.venv prioritario con fallback global)
+if exist ".venv\Scripts\streamlit.exe" (
+    echo ● Entorno virtual .venv validado.
+    echo ● Iniciando servidor Streamlit desde .venv...
     echo.
-    pause
-    exit /b 1
+    echo Telemetria y panel disponibles en:
+    echo http://localhost:8501
+    echo.
+    echo Para apagar la aplicacion:
+    echo - Presiona Ctrl + C en esta consola, o
+    echo - Ejecuta scripts\3_apagar.bat
+    echo.
+    .venv\Scripts\streamlit.exe run app.py
+) else (
+    echo ▲ [AVISO] .venv no detectado o incompleto.
+    echo ● Iniciando servidor Streamlit con Python global...
+    echo.
+    echo Telemetria y panel disponibles en:
+    echo http://localhost:8501
+    echo.
+    echo Para apagar la aplicacion:
+    echo - Presiona Ctrl + C en esta consola, o
+    echo - Ejecuta scripts\3_apagar.bat
+    echo.
+    streamlit run app.py
 )
-
-echo ● Entorno virtual .venv validado.
-echo ● Iniciando servidor Streamlit...
-echo.
-echo Telemetria y panel disponibles en:
-echo http://localhost:8501
-echo.
-echo Para apagar la aplicacion:
-echo - Presiona Ctrl + C en esta consola, o
-echo - Ejecuta scripts\3_apagar.bat
-echo.
-
-.venv\Scripts\streamlit.exe run app.py
 
 pause

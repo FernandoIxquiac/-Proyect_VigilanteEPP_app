@@ -107,7 +107,7 @@ if errorlevel 1 (
 )
 
 echo ⚙ Instalando PyTorch CPU optimizado (sin dependencias CUDA)...
-.venv\Scripts\pip.exe install torch==2.2.2+cpu torchvision==0.17.2+cpu --index-url https://download.pytorch.org/whl/cpu
+.venv\Scripts\pip.exe install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 if errorlevel 1 (
     echo [ERROR] Fallo al instalar PyTorch CPU.
     pause

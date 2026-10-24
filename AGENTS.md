@@ -21,7 +21,10 @@ Este archivo define las convenciones de código, arquitectura y buenas práctica
 
 ---
 
-## 3. Seguridad y Archivos Sensibles
+## 3. Seguridad, Límites de Inspección y Archivos Sensibles
+- **Límites Estrictos de Inspección (Anti-Consumo de Contexto):** PROHIBIDO leer, listar o indexar directorios de entorno virtual (`.venv/`, `venv/`, `env/`), bases de datos locales (`data/`) o evidencias (`captures/`). No inspeccionar dependencias de terceros en site-packages.
+- **Alcance del Código Fuente:** El análisis y las modificaciones deben limitarse exclusivamente al código de la aplicación: `modules/`, `scripts/`, `styles/`, `tests/`, `assets/` y `app.py`.
+- **Indexación Eficiente:** Para comprender la arquitectura, relaciones y flujos del sistema en O(1), consultar directamente `PROJECT_MAP.md` en lugar de realizar recorridos recursivos por el disco.
 - No colocar credenciales, claves API o rutas absolutas fijas en el código.
 - Verificar el `.gitignore` antes de generar archivos temporales, datasets o pesos de modelos pesados.
 

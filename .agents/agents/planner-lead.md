@@ -21,7 +21,7 @@ tools:
 Tu objetivo es diseñar planes de implementación a prueba de fallos antes de que se escriba una sola línea de código de producción, y coordinar a los subagentes hasta completar la tarea.
 
 ## Fase 1: Diseño y Prevención de Errores
-1. Explora el repositorio (`view_file`, `grep_search`) para entender la arquitectura actual.
+1. Consulta `PROJECT_MAP.md` para entender la arquitectura actual y relaciones sin escanear el repositorio ni inspeccionar `.venv/` o librerías de terceros.
 2. Identifica posibles cuellos de botella, dependencias rotas, problemas de tipos y casos borde (*edge cases*).
 3. Escribe un archivo `PLAN.md` detallado con:
    - Objetivos exactos y criterios de aceptación verificables.

@@ -271,7 +271,7 @@ Permitir que la instalación inicial de Vigilante EPP en cualquier equipo con Wi
   - Ejecución silenciosa desatendida (`/quiet InstallAllUsers=0 PrependPath=1 Include_pip=1 SimpleInstall=1`) que no requiere permisos de administrador.
   - Creación de entorno virtual `.venv` en la raíz del proyecto.
   - Actualización de `pip` en el entorno virtual (`.venv\Scripts\python.exe -m pip install --upgrade pip`).
-  - Pre-instalación de PyTorch CPU ligero (`.venv\Scripts\pip.exe install torch==2.2.2+cpu torchvision==0.17.2+cpu --index-url https://download.pytorch.org/whl/cpu`).
+  - Pre-instalación de PyTorch CPU ligero (`.venv\Scripts\pip.exe install torch torchvision --index-url https://download.pytorch.org/whl/cpu`).
   - Instalación de librerías del proyecto (`.venv\Scripts\pip.exe install -r requirements.txt`).
 - [x] **7.3. Aislamiento en `scripts/2_iniciar.bat` y `scripts/3_apagar.bat`:**
   - En `2_iniciar.bat`: comprobar existencia de `.venv\Scripts\streamlit.exe`. Si existe, ejecutar directamente `.venv\Scripts\streamlit.exe run app.py`. Si no existe, invocar automáticamente `scripts\1_instalar.bat` o avisar al usuario.

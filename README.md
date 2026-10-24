@@ -229,7 +229,7 @@ source .venv/bin/activate
 **3. Instalar dependencias**
 ```bash
 # Instalar PyTorch CPU ligero
-pip install torch==2.2.2+cpu torchvision==0.17.2+cpu --index-url https://download.pytorch.org/whl/cpu
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
 # Instalar librerías del proyecto
 pip install -r requirements.txt
