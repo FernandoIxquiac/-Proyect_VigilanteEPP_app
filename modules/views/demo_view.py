@@ -54,7 +54,7 @@ def render_demo_view(model, is_dark: bool, cfg: dict):
             stop_demo_requested = True
 
         if is_demo_running:
-            st.markdown('<div class="status-indicator-running">● DEMO EN VIVO</div>', unsafe_allow_html=True)
+            st.markdown('<div class="status-indicator-running"><span class="status-live-dot"></span>● DEMO EN VIVO</div>', unsafe_allow_html=True)
         else:
             st.markdown('<div class="status-indicator-stopped">○ DEMO DETENIDA</div>', unsafe_allow_html=True)
 
@@ -212,7 +212,8 @@ def render_demo_view(model, is_dark: bool, cfg: dict):
             st.error(demo_state.get("message") or "Error en la demostración.")
         render_desktop_window_card(
             "◈ VENTANA DE ESCRITORIO ACTIVA (DEMOSTRACION)",
-            "El video o imagen analizada se proyecta en la ventana flotante de escritorio. Este modo no almacena eventos en la base de datos ni evidencias en disco."
+            "El video o imagen analizada se proyecta en la ventana flotante de escritorio. Este modo no almacena eventos en la base de datos ni evidencias en disco.",
+            is_active=is_demo_running
         )
 
     with col_recent:
@@ -223,7 +224,7 @@ def render_demo_view(model, is_dark: bool, cfg: dict):
             st.markdown('<div class="feed-header">ÚLTIMAS AUDITORÍAS (DEMOSTRACIÓN)</div>', unsafe_allow_html=True)
             if recent_events:
                 inc_cards = "".join(
-                    render_incident_card(inc["time"], inc["title"], inc["badge"], is_dark)
+                    render_incident_card(inc["time"], inc["title"], inc["badge"], is_dark, extra_class="incident-card-animated")
                     for inc in recent_events
                 )
                 st.markdown(f"<div>{inc_cards}</div>", unsafe_allow_html=True)

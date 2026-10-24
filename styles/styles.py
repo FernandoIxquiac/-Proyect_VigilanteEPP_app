@@ -911,6 +911,116 @@ def get_theme_css(is_dark: bool = True, is_mini: bool = False) -> str:
         box-shadow: var(--shadow-card) !important;
     }}
 
+    @keyframes hud-scanline {{
+        0% {{
+            border-left-color: var(--brand-primary);
+            box-shadow: var(--shadow-card), inset 0 0 12px rgba(0, 168, 232, 0.05);
+        }}
+        50% {{
+            border-left-color: #38bdf8;
+            box-shadow: var(--shadow-card), inset 0 0 16px rgba(0, 168, 232, 0.14);
+        }}
+        100% {{
+            border-left-color: var(--brand-primary);
+            box-shadow: var(--shadow-card), inset 0 0 12px rgba(0, 168, 232, 0.05);
+        }}
+    }}
+
+    .hud-card-active {{
+        border-left: 5px solid var(--brand-primary) !important;
+        animation: hud-scanline 2.5s infinite ease-in-out !important;
+    }}
+
+    @keyframes pulse-live {{
+        0% {{
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        }}
+        70% {{
+            transform: scale(1);
+            box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+        }}
+        100% {{
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        }}
+    }}
+
+    .status-live-dot {{
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background-color: var(--status-safe);
+        vertical-align: middle;
+        margin-right: 6px;
+        animation: pulse-live 1.8s infinite ease-in-out;
+    }}
+
+    @keyframes border-alert-flash {{
+        0% {{
+            border-color: rgba(239, 68, 68, 0.45);
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.25);
+        }}
+        50% {{
+            border-color: rgba(239, 68, 68, 0.95);
+            box-shadow: 0 0 8px 1px rgba(239, 68, 68, 0.35);
+        }}
+        100% {{
+            border-color: rgba(239, 68, 68, 0.45);
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        }}
+    }}
+
+    .status-card-danger {{
+        animation: border-alert-flash 1.2s infinite ease-in-out !important;
+    }}
+
+    @keyframes incident-slide {{
+        from {{
+            opacity: 0;
+            transform: translateY(-4px);
+        }}
+        to {{
+            opacity: 1;
+            transform: translateY(0);
+        }}
+    }}
+
+    .incident-card-animated {{
+        animation: incident-slide 0.25s ease-out;
+    }}
+
+    @keyframes badge-heartbeat {{
+        0% {{
+            opacity: 0.85;
+            transform: scale(1);
+        }}
+        50% {{
+            opacity: 1;
+            transform: scale(1.02);
+        }}
+        100% {{
+            opacity: 0.85;
+            transform: scale(1);
+        }}
+    }}
+
+    .header-active-badge {{
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        background: rgba(16, 185, 129, 0.12) !important;
+        color: #10B981 !important;
+        border: 1px solid rgba(16, 185, 129, 0.35) !important;
+        padding: 3px 9px !important;
+        border-radius: 6px !important;
+        font-size: 0.68rem !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-weight: 600 !important;
+        animation: badge-heartbeat 2s infinite ease-in-out !important;
+    }}
+
     .hud-card-title {{
         font-size: 1.15rem !important;
         font-weight: 800 !important;
@@ -989,7 +1099,7 @@ def render_top_header(is_dark: bool = True) -> str:
         f'<div style="font-size:0.72rem; color:var(--text-secondary);">Monitoreo Inteligente de Seguridad Industrial en Tiempo Real</div>'
         f'</div></div>'
         f'<div style="display:flex; align-items:center; gap:8px;">'
-        f'<span style="display:inline-flex; align-items:center; gap:6px; background:rgba(16,185,129,0.12); color:#10B981; border:1px solid rgba(16,185,129,0.35); padding:3px 9px; border-radius:6px; font-size:0.68rem; font-family:\'JetBrains Mono\',monospace; font-weight:600;">{icon_active} SISTEMA ACTIVO</span>'
+        f'<span class="header-active-badge">{icon_active} SISTEMA ACTIVO</span>'
         f'<span style="display:inline-flex; align-items:center; gap:6px; background:var(--bg-elevated); color:var(--text-secondary); border:1px solid var(--border-strong); padding:3px 9px; border-radius:6px; font-size:0.68rem; font-family:\'JetBrains Mono\',monospace; font-weight:600;">{icon_cpu} YOLOv8 + ByteTrack</span>'
         f'</div></div>'
     )
@@ -1005,9 +1115,10 @@ def render_status_card(state_type: str, title: str, message: str, is_dark: bool 
     }
     cfg = palette.get(state_type, palette["standby"])
     status_icon = get_svg_icon(cfg["icon"], size=14, color=cfg["color"], stroke_width=2.2)
+    card_class = ' class="status-card-danger"' if state_type == "danger" else ""
 
     return (
-        f'<div style="background-color:var(--bg-card); border:2px solid {cfg["border"]}; border-radius:8px; padding:10px 14px; min-height:64px; '
+        f'<div{card_class} style="background-color:var(--bg-card); border:2px solid {cfg["border"]}; border-radius:8px; padding:10px 14px; min-height:64px; '
         f'display:flex; align-items:center; justify-content:space-between; gap:12px; box-shadow:var(--shadow-card);">'
         f'<div style="display:flex; flex-direction:column; gap:2px;">'
         f'<div style="display:flex; align-items:center; gap:8px;">'
@@ -1023,7 +1134,7 @@ def render_status_card(state_type: str, title: str, message: str, is_dark: bool 
     )
 
 
-def render_incident_card(timestamp: str, title: str, badge_type: str = "danger", is_dark: bool = True) -> str:
+def render_incident_card(timestamp: str, title: str, badge_type: str = "danger", is_dark: bool = True, extra_class: str = "") -> str:
     """Tarjeta compacta de bitácora con acento lateral semántico y tipografía monoespaciada para la hora."""
     badges = {
         "danger":  {"color": "#EF4444", "bg": "rgba(239, 68, 68, 0.12)",  "border": "rgba(239, 68, 68, 0.35)",  "text": "INFRACCIÓN", "icon": "shield-x"},
@@ -1032,9 +1143,10 @@ def render_incident_card(timestamp: str, title: str, badge_type: str = "danger",
     }
     b = badges.get(badge_type, badges["safe"])
     b_icon = get_svg_icon(b["icon"], size=12, color=b["color"], stroke_width=2.0)
+    class_attr = f' class="{extra_class.strip()}"' if extra_class.strip() else ""
 
     return (
-        f'<div style="background-color:var(--bg-card); border:1px solid {b["border"]}; border-radius:6px; padding:8px 12px; margin-bottom:6px;">'
+        f'<div{class_attr} style="background-color:var(--bg-card); border:1px solid {b["border"]}; border-radius:6px; padding:8px 12px; margin-bottom:6px;">'
         f'<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">'
         f'<span style="font-size:0.70rem; color:var(--text-secondary); font-family:\'JetBrains Mono\',monospace; font-weight:600;">{timestamp}</span>'
         f'<span style="display:inline-flex; align-items:center; gap:4px; font-size:0.62rem; font-family:\'JetBrains Mono\',monospace; font-weight:700; background:{b["bg"]}; color:{b["color"]}; border:1px solid {b["border"]}; padding:2px 6px; border-radius:4px;">{b_icon} {b["text"]}</span>'

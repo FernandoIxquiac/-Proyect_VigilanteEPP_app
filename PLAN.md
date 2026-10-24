@@ -26,6 +26,7 @@ Cualquier agente (incluyendo `coder-flash` o modelos de respaldo) que ejecute es
 - [x] **Fase 3:** Unificación del Núcleo de Inferencia (`AuditorEngine`)
 - [x] **Fase 4:** Desacoplamiento y Modularización de Vistas UI (`app.py` a `modules/views/`)
 - [x] **Fase 5:** Higiene de Código Anti-Slop y Consolidación de Estilos CSS
+- [x] **Fase 6:** Micro-interacciones y Animaciones Industriales Sobrias (UI / CSS / Plotly)
 
 ---
 
@@ -201,6 +202,50 @@ Eliminar estilos en línea desordenados, retirar comentarios decorativos generad
 - Ejecutar la suite completa: `python -m unittest discover tests`.
 - Compilación sintáctica global: `python -m py_compile app.py modules/*.py modules/views/*.py styles/*.py`.
 - Verificación manual en navegador de la fluidez global de la aplicación.
+
+---
+
+## Fase 6: Micro-interacciones y Animaciones Industriales Sobrias (UI / CSS / Plotly)
+
+### Objetivo
+Implementar micro-animaciones sobrias y transiciones reactivas en CSS y Plotly para comunicar telemetría y estado operativo en tiempo real (cámara activa, cambios de nivel de riesgo en semáforo, actualización de gráficas y llegada de nuevos incidentes) sin degradar el rendimiento y cumpliendo estrictamente los filtros de anti-slop.
+
+### Justificación de Propósito Funcional (Anti-Slop R-19 / R-13 / R-01)
+- Cada animación responde a un evento de negocio específico:
+  1. **Indicador de cámara activa:** Proporciona certeza visual inmediata de que la captura de video está procesando cuadros.
+  2. **Tarjeta de ventana nativa activa:** Confirma que el visor OpenCV desacoplado está operando.
+  3. **Tarjeta semáforo (crítico):** Un pulso de advertencia de 1.2s en el borde enfoca la atención del operador ante eventos peligrosos.
+  4. **Bitácora forense:** Desplazamiento sutil hacia abajo (`slide-in`) al agregarse una nueva evidencia.
+  5. **Gráficos Plotly:** La interpolación fluida evita saltos bruscos cada vez que el fragmento reactivo actualiza contadores.
+  6. **Cabecera institucional:** El latido sutil en el badge de sistema activo confirma que el hilo de inferencia no está bloqueado.
+- Topes de dosis estrictos: Cero brillos de pantalla completa, cero neones estridentes, aceleración 100% por GPU en navegador.
+
+### Tareas Quirúrgicas
+- [x] **6.1. Definición de Keyframes y Clases Semánticas en `styles/styles.py`:**
+  - Agregar `@keyframes pulse-live` y la clase `.status-live-dot` (pulso circular verde de 9px).
+  - Agregar `@keyframes hud-scanline` y la clase `.hud-card-active` con acento lateral pulsante.
+  - Agregar `@keyframes border-alert-flash` y la clase `.status-card-danger` con destello de borde de 1.2s en rojo semafórico.
+  - Agregar `@keyframes incident-slide` y la clase `.incident-card-animated` con transición de entrada suave (0.25s).
+  - Agregar `@keyframes badge-heartbeat` y la clase `.header-active-badge` en la cabecera.
+  - Asegurar compatibilidad de contraste y variables cromáticas en Modo Claro y Modo Oscuro (R-34).
+- [x] **6.2. Interpolación y Transición Fluida en `modules/charts.py`:**
+  - Configurar en `create_spc_control_chart` y `create_severity_bar_chart`:
+    - `uirevision="constant_session_zoom"` para retener el estado y perspectiva del usuario durante refrescos de fragmentos.
+    - `transition={"duration": 500, "easing": "cubic-in-out"}` para suavizar la actualización de líneas y barras.
+- [x] **6.3. Integración en Componentes y Vistas UI:**
+  - En `styles/styles.py`: actualizar `render_status_card` para aplicar la clase animada cuando el estado sea `danger`.
+  - En `styles/styles.py`: actualizar `render_top_header` para aplicar `.header-active-badge` en el indicador de sistema activo.
+  - En `modules/views/components.py`: actualizar `render_desktop_window_card` para aceptar un flag opcional `is_active: bool = False` que inyecte la clase `.hud-card-active`.
+  - En `modules/views/live_view.py`: integrar `<span class="status-live-dot"></span>` en el indicador de cámara activa, pasar `is_active=True` a `render_desktop_window_card` y aplicar la animación en las tarjetas de incidentes.
+- [x] **6.4. Verificación y Control de Calidad:**
+  - Cero emojis en todos los archivos modificados (prohibición estricta).
+  - Ejecutar la suite de pruebas unitarias: `python -m unittest discover tests` (39/39 OK).
+  - Compilación sintáctica sin errores: `python -m py_compile app.py modules/*.py modules/views/*.py styles/*.py`.
+
+### Criterios de Aceptación y Anti-Errores
+- Los 39 tests automáticos deben pasar sin errores: `python -m unittest discover tests`.
+- No alterar la lógica de hilos de inferencia ni la persistencia SQLite en `modules/auditor.py` o `modules/database.py`.
+- Las animaciones deben verse fluidas y sobrias tanto en tema claro como oscuro sin desplazar componentes.
 
 ---
 

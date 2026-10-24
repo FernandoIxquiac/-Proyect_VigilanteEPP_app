@@ -27,9 +27,9 @@
 | **Visión Artificial** | Ultralytics YOLOv8, OpenCV 4.8+ | Inferencia local BGR nativa (zero-copy) en CPU o GPU (CUDA) |
 | **Núcleo de Inferencia** | `modules/auditor_core.py` | Clase base `BaseAuditorService` con pacing de FPS y HUD unificado |
 | **Tracking** | ByteTrack (MOT) | Persistencia de IDs entre frames con filtro anti-parpadeo |
-| **Visualización** | Plotly (≥ 5.0) | Gráficos de Control Estadístico de Procesos (SPC) y barras cromáticas |
+| **Visualización** | Plotly (≥ 5.0) | Gráficos de Control Estadístico de Procesos (SPC) y barras cromáticas con interpolación reactiva suave (transition y uirevision) |
 | **Base de Datos** | SQLite (`data/vigilante_epp.db`) | Esquema relacional normalizado con modo WAL e incrementos atómicos |
-| **Estilos** | CSS personalizado (`styles/styles.py`) | Variables semánticas Dark/Light, inversión reactiva de canvas para `st.dataframe`, deslizadores unificados en azul (`hue-rotate 200°`), switches/checkboxes corporativos y clases utilitarias |
+| **Estilos** | CSS personalizado (`styles/styles.py`) | Variables semánticas Dark/Light, micro-interacciones de telemetría (pulso en vivo, scanline HUD, alerta de infracción y deslizamiento de incidentes), inversión reactiva de canvas para `st.dataframe`, deslizadores unificados en azul (`hue-rotate 200°`), switches/checkboxes corporativos y clases utilitarias |
 | **Reportes** | HTML5 / CSS auto-contenido | Convertibles a PDF (ISO 45001 / OSHA 1910) y CSV forense |
 
 ---
@@ -142,7 +142,7 @@ PROYECTO EPP/
 ├── styles/                     # Capa de diseño y presentación
 │   ├── __init__.py
 │   ├── icons.py                # Gestor de iconos vectoriales SVG con soporte para tamaño, trazo y color dinámico
-│   └── styles.py               # Inyección CSS personalizada, clases utilitarias, header y status cards
+│   └── styles.py               # Inyección CSS personalizada, clases utilitarias, micro-interacciones de telemetría, header y status cards
 ├── modules/                    # Lógica modular de backend desacoplada
 │   ├── __init__.py
 │   ├── audit_writer.py         # Persistencia asíncrona desacoplada en segundo plano para SQLite y disco
@@ -150,7 +150,7 @@ PROYECTO EPP/
 │   ├── auditor.py              # Servicio de auditoría en vivo (LiveAuditorService) conectado a SQLite
 │   ├── camera.py               # Captura multihilo desacoplada, buffer O(1) y gestión singleton de hardware
 │   ├── camera_sources.py       # Centralización de fuentes de video y exclusión mutua de hardware (CAMERA_MODE_LOCK)
-│   ├── charts.py               # Gráficos de Control Estadístico de Procesos (SPC) y severidad con Plotly
+│   ├── charts.py               # Gráficos de Control Estadístico de Procesos (SPC) y severidad con Plotly e interpolación reactiva fluida
 │   ├── database.py             # Capa SQLite WAL optimizada con incrementos atómicos y consultas agregadas
 │   ├── demo_video.py           # Servicio de demostración en memoria: video y fotos, cero persistencia en BD
 │   ├── detector.py             # Inferencia YOLOv8 BGR nativo, lógica espacial y semaforización
@@ -161,7 +161,7 @@ PROYECTO EPP/
 │   ├── tracker_manager.py      # Tracking persistente ByteTrack, anti-parpadeo y cooldown de alertas
 │   └── views/                  # Vistas modulares y componentes de interfaz Streamlit
 │       ├── __init__.py         # Exportaciones de vistas
-│       ├── components.py       # Plantillas RTSP, escaneo de dispositivos y tarjetas HUD
+│       ├── components.py       # Plantillas RTSP, escaneo de dispositivos y tarjetas HUD con modo reactivo activo
 │       ├── config_dialog.py    # Diálogo modal emergente (@st.dialog)
 │       ├── demo_view.py        # Vista de demostración y sandbox interactivo
 │       ├── live_view.py        # Vista de análisis y supervisión en vivo

@@ -108,6 +108,8 @@ def create_spc_control_chart(hours_df: pd.DataFrame, is_dark: bool = True) -> go
     # Configuración de Layout y Estilo Cockpit Industrial
     y_max = max(max(y_vals, default=0), ucl_val) + 1.2
     fig.update_layout(
+        uirevision="constant_session_zoom",
+        transition={"duration": 500, "easing": "cubic-in-out"},
         paper_bgcolor=bg_paper,
         plot_bgcolor=bg_paper,
         font=dict(family="Inter, sans-serif", color=text_color, size=11),
@@ -215,6 +217,8 @@ def create_severity_bar_chart(history_df: pd.DataFrame, is_dark: bool = True) ->
     x_limit = max_val * 1.35 if max_val > 0 else 5
 
     fig.update_layout(
+        uirevision="constant_session_zoom",
+        transition={"duration": 500, "easing": "cubic-in-out"},
         paper_bgcolor=bg_paper,
         plot_bgcolor=bg_paper,
         font=dict(family="Inter, sans-serif", color=text_color, size=11),

@@ -40,7 +40,7 @@ def render_live_view(model, is_dark: bool, cfg: dict):
             stop_requested = True
 
         if is_auditing:
-            st.markdown('<div class="status-indicator-running">● CAMARA EN VIVO</div>', unsafe_allow_html=True)
+            st.markdown('<div class="status-indicator-running"><span class="status-live-dot"></span>● CAMARA EN VIVO</div>', unsafe_allow_html=True)
         else:
             st.markdown('<div class="status-indicator-stopped">○ CAMARA DETENIDA</div>', unsafe_allow_html=True)
 
@@ -137,7 +137,8 @@ def render_live_view(model, is_dark: bool, cfg: dict):
         if auditor.is_running():
             render_desktop_window_card(
                 "◈ VENTANA DE ESCRITORIO ACTIVA",
-                "El video y las detecciones se muestran en una ventana independiente. Puedes moverla al segundo monitor y seguir usando este panel para consultar las estadísticas."
+                "El video y las detecciones se muestran en una ventana independiente. Puedes moverla al segundo monitor y seguir usando este panel para consultar las estadísticas.",
+                is_active=True
             )
         elif native_state.get("status") == "danger":
             st.error(native_state.get("message") or "No se pudo abrir la cámara seleccionada.")
@@ -152,7 +153,7 @@ def render_live_view(model, is_dark: bool, cfg: dict):
             st.markdown('<div class="feed-header">ÚLTIMAS AUDITORÍAS (TURNO)</div>', unsafe_allow_html=True)
             if recent_events:
                 inc_cards = "".join(
-                    render_incident_card(inc["time"], inc["title"], inc["badge"], is_dark)
+                    render_incident_card(inc["time"], inc["title"], inc["badge"], is_dark, extra_class="incident-card-animated")
                     for inc in recent_events
                 )
                 st.markdown(f"<div>{inc_cards}</div>", unsafe_allow_html=True)

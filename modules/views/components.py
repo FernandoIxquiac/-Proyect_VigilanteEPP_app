@@ -33,11 +33,12 @@ def render_device_scanner(btn_key: str):
         st.rerun()
 
 
-def render_desktop_window_card(title: str, description: str):
+def render_desktop_window_card(title: str, description: str, is_active: bool = False):
     """Renderiza tarjeta informativa de ventana nativa de escritorio."""
+    card_class = "hud-card hud-card-active" if is_active else "hud-card"
     st.markdown(
         f"""
-        <div class="hud-card">
+        <div class="{card_class}">
             <div class="hud-card-title">{title}</div>
             <div class="hud-card-desc">{description}</div>
         </div>

@@ -84,6 +84,7 @@ Las ventanas de video se abren en el equipo donde se ejecuta Streamlit. Si se ac
 - **Base de Datos Normalizada** — SQLite con esquema relacional (sesiones + eventos), índices B-Tree y soporte para múltiples turnos históricos.
 - **Informes Forenses HTML** — Reportes auto-contenidos listos para guardar como PDF (ISO 45001 / OSHA 1910).
 - **Calculadora de ROI** — Estimación interactiva de ahorro anual en multas y pólizas de seguro.
+- **Micro-interacciones y Telemetría Reactiva** — Indicadores visuales en CSS acelerado por GPU (pulso de cámara activa, scanline en visor, alerta perimetral en infracciones y suavizado reactivo de gráficas con Plotly).
 - **Modo Oscuro / Claro** — Interfaz adaptable con tema profesional.
 - **100% Offline** — Funciona sin conexión a internet una vez instalado.
 
@@ -98,11 +99,11 @@ Las ventanas de video se abren en el equipo donde se ejecuta Streamlit. Si se ac
 | Detección IA | Ultralytics YOLOv8 | ≥ 8.1 |
 | Multi-Object Tracking | ByteTrack (integrado en YOLO) | — |
 | Procesamiento de Imagen | OpenCV (`cv2`) | ≥ 4.8 |
-| Visualización Interactiva | Plotly | ≥ 5.0 |
+| Visualización Interactiva | Plotly | ≥ 5.0 (interpolación fluida y uirevision) |
 | Base de Datos | SQLite (normalizada, multi-sesión) | built-in |
 | Análisis de Datos | Pandas | ≥ 2.0 |
 | Computación Numérica | NumPy | ≥ 1.24 |
-| **Estilos** | CSS personalizado (`styles/styles.py`) | Tema Dark/Light con variables CSS semánticas, tipografía JetBrains Mono para telemetría, logo SVG vectorial en sidebar y header |
+| **Estilos** | CSS personalizado (`styles/styles.py`) | Tema Dark/Light con variables CSS semánticas, micro-interacciones de telemetría aceleradas por GPU, tipografía JetBrains Mono para telemetría, logo SVG vectorial en sidebar y header |
 
 ---
 
@@ -315,7 +316,7 @@ Capa de lógica anti-duplicación (`WorkerTrackManager`). Aplica cooldowns indiv
 Esquema relacional SQLite de dos tablas (`camera_sessions` + `camera_events`) con claves foráneas, índices B-Tree y modo concurrente WAL (`PRAGMA journal_mode = WAL`).
 
 ### `modules/charts.py`
-Gráficos interactivos de Control Estadístico de Procesos (SPC / Shewhart Run Chart) y distribución de severidad cromática con Plotly bajo normativas ISO 45001 / OSHA 1910.
+Gráficos interactivos de Control Estadístico de Procesos (SPC / Shewhart Run Chart) y distribución de severidad cromática con Plotly bajo normativas ISO 45001 / OSHA 1910, con interpolación reactiva fluida y retención de perspectiva de zoom.
 
 ### `modules/report_generator.py`
 Genera informes HTML auto-contenidos con membrete corporativo, galería de evidencias fotográficas en Base64, tabla forense y casillas de firma — listos para imprimir como PDF.
@@ -324,7 +325,7 @@ Genera informes HTML auto-contenidos con membrete corporativo, galería de evide
 Capa de sesión Streamlit y analítica ejecutiva. Conecta el estado de `st.session_state` con la base de datos, calcula el ROI de multas y expone wrappers limpios para la UI.
 
 ### `tests/`
-Suite formal de pruebas automatizadas compuestas por 31 pruebas unitarias (`test_demo_video.py`, `test_auditor_first_frame.py`, `test_audit_writer.py`, `test_app_navigation.py`, `test_camera_frame_sequence.py`) que validan la entrega de previsualización, tracking, persistencia y navegación con 100% de éxito.
+Suite formal de pruebas automatizadas compuestas por 39 pruebas unitarias (`test_demo_video.py`, `test_auditor_first_frame.py`, `test_audit_writer.py`, `test_app_navigation.py`, `test_camera_frame_sequence.py`, `test_camera_sources.py`) que validan la entrega de previsualización, tracking, persistencia y navegación con 100% de éxito.
 
 ---
 
@@ -349,11 +350,12 @@ Suite formal de pruebas automatizadas compuestas por 31 pruebas unitarias (`test
 - [x] Base de datos multi-sesión (SQLite)
 - [x] Informes HTML exportables (ISO 45001)
 - [x] Calculadora interactiva de ROI
+- [x] Exportación de informes en PDF nativo (con degradación automática a HTML)
+- [x] Micro-interacciones visuales y telemetría reactiva en CSS/Plotly
 - [ ] Soporte para detección de guantes y gafas de seguridad
 - [ ] Notificaciones por correo / SMS ante infracciones críticas
 - [ ] Panel web multi-cámara con mapa de planta
 - [ ] API REST para integración con sistemas SCADA/ERP
-- [x] Exportación de informes en PDF nativo (con degradación automática a HTML)
 
 ---
 
