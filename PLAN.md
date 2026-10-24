@@ -27,6 +27,7 @@ Cualquier agente (incluyendo `coder-flash` o modelos de respaldo) que ejecute es
 - [x] **Fase 4:** Desacoplamiento y Modularización de Vistas UI (`app.py` a `modules/views/`)
 - [x] **Fase 5:** Higiene de Código Anti-Slop y Consolidación de Estilos CSS
 - [x] **Fase 6:** Micro-interacciones y Animaciones Industriales Sobrias (UI / CSS / Plotly)
+- [x] **Fase 7:** Automatización del Despliegue, Auto-Instalación de Python y Aislamiento venv (Windows)
 
 ---
 
@@ -246,6 +247,46 @@ Implementar micro-animaciones sobrias y transiciones reactivas en CSS y Plotly p
 - Los 39 tests automáticos deben pasar sin errores: `python -m unittest discover tests`.
 - No alterar la lógica de hilos de inferencia ni la persistencia SQLite en `modules/auditor.py` o `modules/database.py`.
 - Las animaciones deben verse fluidas y sobrias tanto en tema claro como oscuro sin desplazar componentes.
+
+---
+
+## Fase 7: Automatización del Despliegue, Auto-Instalación de Python y Aislamiento venv (Windows)
+
+### Objetivo
+Permitir que la instalación inicial de Vigilante EPP en cualquier equipo con Windows funcione de manera 100% desatendida y automática: si el equipo no tiene Python instalado, el script lo descarga e instala silenciosamente sin requerir privilegios de administrador; aísla las librerías en un entorno virtual `.venv` local para evitar conflictos y elimina problemas de compilación en Windows.
+
+### Diagnóstico de Cuellos de Botella y Puntos de Falla
+1. **Falta de Python / PATH en equipos nuevos:** `scripts/1_instalar.bat` actualmente solo comprueba `python --version` y aborta con error, forzando una instalación manual propensa a fallas (olvido de marcar "Add Python to PATH").
+2. **Infección del entorno global y permisos:** No se crea un entorno virtual (`.venv`); `pip install -r requirements.txt` se ejecuta sobre el Python global del sistema, lo que provoca denegaciones de acceso (`Access is denied`) en equipos corporativos o colisiones de versiones.
+3. **Falla de compilación de `lap`:** `requirements.txt` especifica `lap>=0.4.0`. En Windows, `lap` exige Microsoft Visual C++ 14.0 Build Tools (~1.5 GB). La comunidad de Ultralytics resolvió esto mediante `lapx>=0.5.5`, que distribuye wheels binarios precompilados.
+4. **Dependencia no declarada de PyTorch CPU en Windows:** En `requirements.txt` se omite `torch` con `--no-deps`. En Linux se instala `torch CPU` previamente en `1_instalar_linux.sh`, pero en Windows no existía pre-instalación de PyTorch CPU, lo que provocaba que `ultralytics` fallara o descargara versiones CUDA pesadas (>2.5 GB).
+5. **Invocador `scripts/2_iniciar.bat` no aislado:** Lanza `streamlit run app.py` esperando que `streamlit` esté en el PATH global en vez de apuntar a `.venv\Scripts\streamlit.exe`.
+
+### Tareas Quirúrgicas
+- [x] **7.1. Sustitución de dependencia en `requirements.txt`:**
+  - Reemplazar `lap>=0.4.0` por `lapx>=0.5.5`.
+- [x] **7.2. Reescritura robusta de `scripts/1_instalar.bat`:**
+  - Detección de binario existente (`python`, `py -3` o rutas estándar de AppData).
+  - Si no existe: auto-descarga de instalador oficial Python 3.11.9 (64-bit) vía `curl.exe` nativo (o fallback de PowerShell) a `%TEMP%`.
+  - Ejecución silenciosa desatendida (`/quiet InstallAllUsers=0 PrependPath=1 Include_pip=1 SimpleInstall=1`) que no requiere permisos de administrador.
+  - Creación de entorno virtual `.venv` en la raíz del proyecto.
+  - Actualización de `pip` en el entorno virtual (`.venv\Scripts\python.exe -m pip install --upgrade pip`).
+  - Pre-instalación de PyTorch CPU ligero (`.venv\Scripts\pip.exe install torch==2.2.2+cpu torchvision==0.17.2+cpu --index-url https://download.pytorch.org/whl/cpu`).
+  - Instalación de librerías del proyecto (`.venv\Scripts\pip.exe install -r requirements.txt`).
+- [x] **7.3. Aislamiento en `scripts/2_iniciar.bat` y `scripts/3_apagar.bat`:**
+  - En `2_iniciar.bat`: comprobar existencia de `.venv\Scripts\streamlit.exe`. Si existe, ejecutar directamente `.venv\Scripts\streamlit.exe run app.py`. Si no existe, invocar automáticamente `scripts\1_instalar.bat` o avisar al usuario.
+  - En `3_apagar.bat`: mantener el cierre seguro de procesos Streamlit y Python asegurando que libere los puertos y la cámara.
+- [x] **7.4. Actualización de Documentación en `PROJECT_MAP.md` y `README.md`:**
+  - Actualizar descripción de scripts y entorno virtual `.venv` en `PROJECT_MAP.md`.
+  - Asegurar que `README.md` documente el nuevo comportamiento automático de despliegue.
+- [x] **7.5. Detección, Auto-Instalación de Git y Auto-Vinculación Remota:**
+  - En `scripts/1_instalar.bat`: detección de `git --version`, inclusión en `PATH` de rutas estándar (`C:\Program Files\Git\cmd` y `%LOCALAPPDATA%\Programs\Git\cmd`), auto-instalación desatendida (vía `winget` o instalador oficial 64-bit con `/VERYSILENT`) y auto-vinculación remota para descargas ZIP sin carpeta `.git`.
+  - En `scripts/5_actualizar.bat`: adición de rutas estándar al `PATH`, auto-vinculación remota si falta `.git`, aviso de ejecución de `1_instalar.bat` si Git no existe y sincronización silenciosa de dependencias en `.venv` (`pip install -r requirements.txt`) tras `git pull` exitoso.
+
+### Criterios de Aceptación y Anti-Errores
+- Preservar la regla de **CERO EMOJIS** en scripts `.bat`, logs, código y documentación.
+- Todos los comentarios deben seguir las reglas de `antislop-code`: concisos, de una línea, sin banners decorativos ni narración obvia.
+- La suite de 39 pruebas unitarias debe ejecutarse y aprobar al 100%: `python -m unittest discover tests`.
 
 ---
 

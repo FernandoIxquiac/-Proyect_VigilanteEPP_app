@@ -3,95 +3,93 @@ title Vigilante EPP - Actualizador
 chcp 65001 >nul
 cd /d "%~dp0.."
 
+set "PATH=%PATH%;C:\Program Files\Git\cmd;%LOCALAPPDATA%\Programs\Git\cmd"
+
 echo.
-echo  ================================================================
-echo    VIGILANTE EPP - ACTUALIZADOR AUTOMATICO
-echo    Descarga la ultima version del proyecto desde GitHub
-echo  ================================================================
+echo Vigilante EPP - Actualizador de Sistema
 echo.
 
-REM --- Verificar que git esta instalado ---
 git --version >nul 2>&1
 if errorlevel 1 (
-    echo  [ERROR] Git no esta instalado en este equipo.
-    echo  Descargalo desde: https://git-scm.com/
+    echo ▲ [AVISO] Git no detectado en el sistema.
+    echo ⚙ Ejecuta scripts\1_instalar.bat para instalarlo y configurarlo automaticamente.
     echo.
     pause
     exit /b 1
 )
 
-REM --- Verificar que es un repositorio git ---
 if not exist ".git" (
-    echo  [ERROR] Esta carpeta no es un repositorio Git.
-    echo  Clona el proyecto primero con:
-    echo  git clone https://github.com/FernandoIxquiac/-Proyect_VigilanteEPP_app.git
-    echo.
-    pause
-    exit /b 1
+    echo ▲ [AVISO] Repositorio Git no inicializado en este directorio.
+    echo ⚙ Vinculando con el repositorio remoto...
+    git init -q
+    git remote add origin https://github.com/FernandoIxquiac/-Proyect_VigilanteEPP_app.git
+    git fetch origin main --depth=1 -q
+    git branch -M main >nul 2>&1
+    git reset --mixed origin/main >nul 2>&1
+    git branch -u origin/main main >nul 2>&1
+    echo ● Repositorio vinculado correctamente a origin/main.
 )
 
-REM --- Verificar si hay cambios locales sin guardar ---
 git diff --quiet 2>nul
 if errorlevel 1 (
-    echo  [AVISO] Tienes cambios locales que podrian perderse.
-    echo.
-    set /p local_confirm="  Deseas continuar de todas formas? (s/n): "
+    echo ▲ [AVISO] Tienes cambios locales sin guardar que podrian sobreescribirse.
+    set /p local_confirm="Deseas continuar de todas formas? (s/n): "
     if /i not "%local_confirm%"=="s" (
-        echo.
-        echo  Actualizacion cancelada. Guarda tus cambios primero.
+        echo ● Actualizacion cancelada por el usuario.
         echo.
         pause
         exit /b 0
     )
 )
 
-echo  Conectando con GitHub...
-echo.
-
-REM --- Obtener y mostrar cambios disponibles ---
+echo ⚙ Conectando con GitHub y consultando actualizaciones...
 git fetch origin main >nul 2>&1
 
 for /f %%i in ('git rev-list HEAD..origin/main --count 2^>nul') do set COMMITS_BEHIND=%%i
 
 if "%COMMITS_BEHIND%"=="0" (
-    echo  [OK] Ya tienes la version mas reciente del proyecto.
-    echo  No hay actualizaciones disponibles.
+    echo ● El proyecto ya se encuentra en la version mas reciente.
+    echo ■ No hay actualizaciones pendientes.
     echo.
     pause
     exit /b 0
 )
 
-echo  Se encontraron %COMMITS_BEHIND% actualizacion(es) disponible(s).
+echo ● Se detectaron %COMMITS_BEHIND% actualizacion(es) disponible(s).
 echo.
-echo  Cambios que se descargaran:
-echo  ----------------------------------------------------------------
-git log HEAD..origin/main --oneline 2>nul
-echo  ----------------------------------------------------------------
+echo Cambios a descargar:
+git log HEAD..origin/main --oneline -n 10 2>nul
 echo.
 
-set /p update_confirm="  Deseas actualizar ahora? (s/n): "
+set /p update_confirm="Deseas descargar e instalar la actualizacion? (s/n): "
 if /i not "%update_confirm%"=="s" (
-    echo.
-    echo  Actualizacion cancelada.
+    echo ● Actualizacion cancelada por el usuario.
     echo.
     pause
     exit /b 0
 )
 
 echo.
-echo  Descargando actualizacion...
+echo ⚙ Descargando actualizacion desde origin/main...
 git pull origin main 2>&1
 
 if errorlevel 1 (
     echo.
-    echo  [ERROR] No se pudo actualizar el proyecto.
-    echo  Verifica tu conexion a internet e intenta de nuevo.
-) else (
-    echo.
-    echo  ================================================================
-    echo    PROYECTO ACTUALIZADO CORRECTAMENTE
-    echo    Ejecuta "2_iniciar.bat" para usar la nueva version.
-    echo  ================================================================
+    echo [ERROR] No se pudo actualizar el proyecto. Verifica la conexion a internet.
+    pause
+    exit /b 1
 )
+
+echo ● Codigo actualizado correctamente.
+
+if exist ".venv\Scripts\pip.exe" (
+    echo ⚙ Sincronizando dependencias en el entorno virtual...
+    .venv\Scripts\pip.exe install -r requirements.txt >nul 2>&1
+    echo ● Dependencias sincronizadas.
+)
+
+echo.
+echo ■ Actualizacion completada con exito.
+echo ■ Ejecuta scripts\2_iniciar.bat para usar la nueva version.
 echo.
 pause

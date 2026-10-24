@@ -115,18 +115,18 @@ vigilante-epp/
 ├── README.md                       # Documentación principal del proyecto
 ├── PROJECT_MAP.md                  # Mapa integral de arquitectura y contexto técnico
 ├── LICENSE                         # Licencia MIT
-├── requirements.txt                # Dependencias Python (Streamlit, YOLOv8, Plotly, etc.)
+├── requirements.txt                # Dependencias Python (Streamlit, YOLOv8, Plotly, lapx, etc.)
 ├── .gitignore                      # Exclusiones de Git (BD local, capturas, temporales)
 ├── .gitattributes                  # Normalización de saltos de línea (CRLF para .bat)
 ├── app.py                          # Aplicación principal Streamlit (navegación en sidebar y modal de configuración)
 │
 ├── scripts/                        # Herramientas de ejecución multiplataforma
-│   ├── 1_instalar.bat              # Instala todas las dependencias automáticamente (Windows)
+│   ├── 1_instalar.bat              # Auto-detección e instalación de Python 3.11 y Git, creación de .venv, dependencias y auto-vinculación Git (Windows)
 │   ├── 1_instalar_linux.sh         # Instalación ligera optimizada PyTorch CPU (Linux)
-│   ├── 2_iniciar.bat               # Lanza la aplicación en el navegador (Windows)
-│   ├── 3_apagar.bat                # Cierra el servidor y libera la cámara (Windows)
+│   ├── 2_iniciar.bat               # Lanza la aplicación desde .venv en el navegador (Windows)
+│   ├── 3_apagar.bat                # Cierra el servidor y libera la cámara y puertos (Windows)
 │   ├── 4_publicar_github.bat       # Sincroniza cambios con GitHub con validación de seguridad (Windows)
-│   └── 5_actualizar.bat            # Sincroniza y descarga últimos cambios con Git pull (Windows)
+│   └── 5_actualizar.bat            # Sincroniza con Git pull, auto-vincula repositorios ZIP y actualiza .venv (Windows)
 │
 ├── docs/                           # Documentación técnica y de proyecto
 │   ├── DESIGN.md                   # Sistema de diseño sobrio industrial
@@ -198,14 +198,14 @@ Dentro de la carpeta `scripts/` encontrarás todo lo que necesitas, en orden:
 
 | Script | Acción |
 |---|---|
-| `scripts/1_instalar.bat` | Instala todas las dependencias automáticamente (Windows) |
+| `scripts/1_instalar.bat` | Aprovisionamiento desatendido: auto-detección e instalación silenciosa de Python 3.11.9 y Git (vía winget o instalador oficial), creación del entorno `.venv`, instalación de PyTorch CPU y dependencias con `lapx` precompilado, y auto-vinculación con el repositorio remoto si falta `.git` |
 | `scripts/1_instalar_linux.sh` | Instalación ligera con PyTorch CPU optimizado (Linux) |
-| `scripts/2_iniciar.bat` | Lanza la app en el navegador |
-| `scripts/3_apagar.bat` | Cierra el servidor y libera la cámara |
+| `scripts/2_iniciar.bat` | Lanza la app en el navegador apuntando a `.venv\Scripts\streamlit.exe` |
+| `scripts/3_apagar.bat` | Cierra el servidor y libera la cámara y puertos de red |
 | `scripts/4_publicar_github.bat` | Sube tus cambios a GitHub con verificación de seguridad |
-| `scripts/5_actualizar.bat` | Sincroniza y descarga las últimas actualizaciones de GitHub |
+| `scripts/5_actualizar.bat` | Sincroniza y descarga las últimas actualizaciones de GitHub, auto-vincula el repositorio si se descargó vía ZIP y actualiza automáticamente las dependencias en `.venv` |
 
-> Doble clic sobre cada `.bat` para ejecutarlo en Windows (o `bash scripts/1_instalar_linux.sh` en Linux).
+> Doble clic sobre cada `.bat` para ejecutarlo en Windows (o `bash scripts/1_instalar_linux.sh` en Linux). No requiere privilegios de administrador.
 
 ### Opción B — Manual (cualquier sistema operativo)
 
@@ -215,19 +215,23 @@ git clone https://github.com/tu-usuario/vigilante-epp.git
 cd vigilante-epp
 ```
 
-**2. Crear entorno virtual (recomendado)**
+**2. Crear entorno virtual (aislado)**
 ```bash
 # Windows
-python -m venv venv
-venv\Scripts\activate
+python -m venv .venv
+.venv\Scripts\activate
 
 # macOS / Linux
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
 **3. Instalar dependencias**
 ```bash
+# Instalar PyTorch CPU ligero
+pip install torch==2.2.2+cpu torchvision==0.17.2+cpu --index-url https://download.pytorch.org/whl/cpu
+
+# Instalar librerías del proyecto
 pip install -r requirements.txt
 ```
 

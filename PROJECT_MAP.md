@@ -22,11 +22,11 @@
 
 | Capa | Tecnologías | Notas |
 |---|---|---|
-| **Lenguaje** | Python 3.9+ | Multiplataforma (Windows y Linux) |
+| **Lenguaje** | Python 3.9+ / 3.11 | Multiplataforma (Windows y Linux), aprovisionamiento automático en entorno aislado `.venv` |
 | **Frontend / UI** | Streamlit (≥ 1.30) | Componentes reactivos, SessionState, vistas modulares en `modules/views/` |
 | **Visión Artificial** | Ultralytics YOLOv8, OpenCV 4.8+ | Inferencia local BGR nativa (zero-copy) en CPU o GPU (CUDA) |
 | **Núcleo de Inferencia** | `modules/auditor_core.py` | Clase base `BaseAuditorService` con pacing de FPS y HUD unificado |
-| **Tracking** | ByteTrack (MOT) | Persistencia de IDs entre frames con filtro anti-parpadeo |
+| **Tracking** | ByteTrack (MOT) | Persistencia de IDs entre frames con filtro anti-parpadeo (`lapx` binario precompilado) |
 | **Visualización** | Plotly (≥ 5.0) | Gráficos de Control Estadístico de Procesos (SPC) y barras cromáticas con interpolación reactiva suave (transition y uirevision) |
 | **Base de Datos** | SQLite (`data/vigilante_epp.db`) | Esquema relacional normalizado con modo WAL e incrementos atómicos |
 | **Estilos** | CSS personalizado (`styles/styles.py`) | Variables semánticas Dark/Light, micro-interacciones de telemetría (pulso en vivo, scanline HUD, alerta de infracción y deslizamiento de incidentes), inversión reactiva de canvas para `st.dataframe`, deslizadores unificados en azul (`hue-rotate 200°`), switches/checkboxes corporativos y clases utilitarias |
@@ -109,7 +109,7 @@ flowchart TD
 ```
 PROYECTO EPP/
 ├── app.py                      # Orquestador declarativo (< 200 líneas): routing, sesión y sidebar
-├── requirements.txt            # Dependencias del entorno (Streamlit, YOLOv8, OpenCV, Plotly, etc.)
+├── requirements.txt            # Dependencias del entorno (Streamlit, YOLOv8, OpenCV, Plotly, lapx, etc.)
 ├── README.md                   # Documentación general para usuarios y presentación
 ├── PROJECT_MAP.md              # [ESTE ARCHIVO] Mapa de arquitectura e indexación rápida
 ├── PLAN.md                     # Plan de optimización modular y registro de fases operativas
@@ -133,12 +133,12 @@ PROYECTO EPP/
 ├── captures/                   # [Excluido en Git - Autogenerado]
 │   └── *.jpg                   # Evidencias fotográficas JPG de infracciones
 ├── scripts/                    # Scripts de ejecución rápida multiplataforma
-│   ├── 1_instalar.bat          # Pip install requirements (Windows)
-│   ├── 1_instalar_linux.sh     # Instalación optimizada PyTorch CPU (Linux)
-│   ├── 2_iniciar.bat           # Ejecuta 'streamlit run app.py' (Windows)
-│   ├── 3_apagar.bat            # Mata procesos de Streamlit/Python y libera cámara (Windows)
+│   ├── 1_instalar.bat          # Auto-detección e instalación desatendida de Python 3.11 y Git, creación de .venv, PyTorch CPU y auto-vinculación si falta .git (Windows)
+│   ├── 1_instalar_linux.sh     # Instalación ligera optimizada PyTorch CPU (Linux)
+│   ├── 2_iniciar.bat           # Ejecuta '.venv\Scripts\streamlit.exe run app.py' (Windows)
+│   ├── 3_apagar.bat            # Detiene procesos de Streamlit/Python y libera cámara y puertos (Windows)
 │   ├── 4_publicar_github.bat   # Verificaciones de seguridad, git add, commit y push (Windows)
-│   └── 5_actualizar.bat        # Git pull sincronizado (Windows)
+│   └── 5_actualizar.bat        # Git pull sincronizado con auto-vinculación si falta .git y sincronización de .venv (Windows)
 ├── styles/                     # Capa de diseño y presentación
 │   ├── __init__.py
 │   ├── icons.py                # Gestor de iconos vectoriales SVG con soporte para tamaño, trazo y color dinámico
@@ -253,7 +253,7 @@ PROYECTO EPP/
 
 Antes de ejecutar `scripts/4_publicar_github.bat`, verificar:
 1. **Archivos Sensibles Ignorados:** Verificar que `data/` (`*.db`) y `captures/` (`*.jpg`) no estén en el staged de Git (`git status`).
-2. **Dependencias Completas:** Asegurar que `requirements.txt` incluya `plotly>=5.0.0`.
+2. **Dependencias Completas:** Asegurar que `requirements.txt` incluya `plotly>=5.0.0` y `lapx>=0.5.5`.
 3. **Tamaño del Modelo IA:** `models/ppe_model.pt` pesa ~6.25 MB (dentro del límite de 100 MB).
 4. **Scripts con Permisos / Formato:** Scripts `.bat` preservan formato CRLF y scripts `.sh` formato LF.
 5. **Cero Emojis:** Prohibición estricta de emojis en todo el repositorio.

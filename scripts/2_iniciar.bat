@@ -4,41 +4,37 @@ chcp 65001 >nul
 cd /d "%~dp0.."
 
 echo.
-echo  ========================================================
-echo    2/3  VIGILANTE EPP - INICIANDO APLICACION
-echo  ========================================================
+echo [2/3] Vigilante EPP - Iniciando aplicacion
 echo.
 
-REM --- Verificar que app.py existe ---
+REM Verificacion de existencia de app.py
 if not exist "app.py" (
-    echo  [ERROR] No se encontro app.py.
+    echo [ERROR] No se encontro app.py en el directorio raiz.
     echo.
     pause
     exit /b 1
 )
 
-REM --- Verificar que streamlit esta instalado ---
-streamlit --version >nul 2>&1
-if errorlevel 1 (
-    echo  [ERROR] Streamlit no esta instalado.
-    echo  Ejecuta primero "1_instalar.bat" para instalar las dependencias.
+REM Verificacion de entorno virtual y ejecutable Streamlit
+if not exist ".venv\Scripts\streamlit.exe" (
+    echo ▲ [AVISO] Entorno virtual o Streamlit no detectado.
+    echo ⚙ Ejecuta primero scripts\1_instalar.bat para aprovisionar las dependencias.
     echo.
     pause
     exit /b 1
 )
 
-echo  [OK] Todo listo. Iniciando servidor...
+echo ● Entorno virtual .venv validado.
+echo ● Iniciando servidor Streamlit...
 echo.
-echo  Tu navegador se abrira automaticamente en:
-echo  http://localhost:8501
+echo Telemetria y panel disponibles en:
+echo http://localhost:8501
 echo.
-echo  Para APAGAR la aplicacion:
-echo    - Presiona Ctrl + C en esta ventana, o
-echo    - Ejecuta "3_apagar.bat"
-echo.
-echo  ========================================================
+echo Para apagar la aplicacion:
+echo - Presiona Ctrl + C en esta consola, o
+echo - Ejecuta scripts\3_apagar.bat
 echo.
 
-streamlit run app.py
+.venv\Scripts\streamlit.exe run app.py
 
 pause
